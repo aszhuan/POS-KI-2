@@ -1,0 +1,2540 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toko Kaleleng Indah - Jual Beli Gabah & Beras</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        padi: {
+                            50: '#f4f9f1',
+                            100: '#e5f2de',
+                            200: '#cce5bf',
+                            500: '#4d9334',
+                            600: '#3b7626',
+                            700: '#2f5d20',
+                            800: '#284b1d',
+                            900: '#223f1a',
+                        },
+                        gabah: {
+                            50: '#fefce8',
+                            100: '#fef9c3',
+                            500: '#eab308',
+                            600: '#ca8a04',
+                            700: '#a16207',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Styling khusus Simulasi Struk Thermal di Layar */
+        .thermal-receipt {
+            font-family: 'JetBrains Mono', monospace;
+            background: #fff;
+            color: #000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+            border-top: 4px dashed #cbd5e1;
+            border-bottom: 4px dashed #cbd5e1;
+            transition: width 0.3s ease;
+        }
+        .thermal-58mm {
+            width: 245px;
+            font-size: 11px;
+            line-height: 1.35;
+        }
+        .thermal-80mm {
+            width: 325px;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        /* Aturan Khusus Cetak Printer Thermal (@media print) */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printable-receipt-area, #printable-receipt-area * {
+                visibility: visible;
+            }
+            #printable-receipt-area {
+                position: fixed;
+                left: 0;
+                top: 0;
+                margin: 0 !important;
+                padding: 2mm !important;
+                box-shadow: none !important;
+                border: none !important;
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+            .print-width-58 {
+                width: 58mm !important;
+                max-width: 58mm !important;
+                font-size: 9pt !important;
+            }
+            .print-width-80 {
+                width: 80mm !important;
+                max-width: 80mm !important;
+                font-size: 10pt !important;
+            }
+            @page {
+                margin: 0;
+                size: auto;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased selection:bg-padi-200 selection:text-padi-900 min-h-screen flex flex-col">
+
+    <!-- Toast Notification Container (Pengganti alert) -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-wrap items-center justify-between py-3 gap-3">
+                <!-- Identitas Toko Dinamis -->
+                <div class="flex items-center gap-3">
+                    <div id="header-logo-container" class="w-12 h-12 rounded-2xl bg-gradient-to-br from-padi-600 to-emerald-800 text-amber-300 flex items-center justify-center shadow-md shadow-padi-600/20 overflow-hidden shrink-0 border border-padi-500/30">
+                        <!-- Default SVG Emblem Padi Emas & Hijau Zamrud -->
+                        <svg viewBox="0 0 64 64" class="w-9 h-9" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="32" cy="32" r="28" stroke="#FCD34D" stroke-width="2" stroke-dasharray="4 3"/>
+                            <path d="M32 50V16" stroke="#FDE68A" stroke-width="2.5" stroke-linecap="round"/>
+                            <path d="M32 42C24 42 19 36 19 29C25 29 31 34 32 42Z" fill="#FBBF24"/>
+                            <path d="M32 42C40 42 45 36 45 29C39 29 33 34 32 42Z" fill="#F59E0B"/>
+                            <path d="M32 31C25 31 21 26 21 20C26 20 31 24 32 31Z" fill="#FDE047"/>
+                            <path d="M32 31C39 31 43 26 43 20C38 20 33 24 32 31Z" fill="#FBBF24"/>
+                            <circle cx="32" cy="14" r="3.5" fill="#FEF08A"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h1 id="header-store-name" class="text-base sm:text-xl font-extrabold text-slate-900 tracking-tight">Toko Kaleleng Indah</h1>
+                            <span id="header-store-tagline" class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">Jual Beli Gabah</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-xs text-slate-500 mt-0.5 flex-wrap">
+                            <span class="inline-flex items-center gap-1"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-padi-600"></i> <span id="header-store-address">Rappokaleleng Gowa</span></span>
+                            <span class="inline-flex items-center gap-1"><i data-lucide="phone" class="w-3.5 h-3.5 text-padi-600"></i> <span id="header-store-phone">0852 4048 4045</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Header Actions -->
+                <div class="flex items-center gap-2 flex-wrap">
+                    <!-- Cloud Sync Status Button -->
+                    <button onclick="openCloudModal()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition cursor-pointer" title="Sinkronisasi Cloud & Link Online">
+                        <i data-lucide="cloud" class="w-4 h-4"></i>
+                        <span id="cloud-status-label">Cloud & Link</span>
+                    </button>
+
+                    <!-- Pengaturan Toko Button -->
+                    <button onclick="openStoreSettingsModal()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-300 hover:bg-slate-100 transition cursor-pointer" title="Ubah Nama Toko, Logo & Harga Default">
+                        <i data-lucide="store" class="w-4 h-4 text-padi-600"></i>
+                        <span class="hidden sm:inline">Pengaturan Toko</span>
+                    </button>
+
+                    <!-- Info Aplikasi Ukkiakki Studio -->
+                    <button onclick="openAppInfoModal()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 transition cursor-pointer" title="Info Pengembang Aplikasi">
+                        <i data-lucide="info" class="w-4 h-4 text-amber-400"></i>
+                        <span class="hidden md:inline">Info Aplikasi</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Navigasi Utama (Dashboard Transaksi vs Fitur Khusus Grafik) -->
+            <div class="flex items-center gap-2 pb-3 overflow-x-auto">
+                <button type="button" onclick="switchMainView('view-dashboard')" id="nav-view-dashboard" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-padi-600 text-white shadow-sm transition inline-flex items-center gap-2 shrink-0 cursor-pointer">
+                    <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                    <span>Dashboard Jual & Beli</span>
+                </button>
+                <button type="button" onclick="switchMainView('view-grafik')" id="nav-view-grafik" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition inline-flex items-center gap-2 shrink-0 cursor-pointer">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4 text-indigo-600"></i>
+                    <span>Grafik & Analisis Keuangan</span>
+                </button>
+                <button type="button" onclick="switchMainView('view-modal-giling')" id="nav-view-modal-giling" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition inline-flex items-center gap-2 shrink-0 cursor-pointer">
+                    <i data-lucide="wallet" class="w-4 h-4 text-blue-600"></i>
+                    <span>Modal Usaha & Giling Padi</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-1 w-full">
+
+        <!-- BAGIAN 1: 4 KARTU INDIKATOR REALTIME (SELALU TAMPIL DI ATAS) -->
+        <section aria-label="Ringkasan Realtime">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                <!-- Kartu 1: Sisa Stok Gabah -->
+                <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg inline-block mb-1.5">Sisa Stok Gabah</p>
+                            <h2 id="card-stok-gabah-kg" class="text-2xl font-extrabold text-slate-900 tracking-tight">0 kg</h2>
+                            <p id="card-stok-gabah-ton" class="text-xs font-medium text-slate-500 mt-1">0,00 Ton • Nilai: Rp 0</p>
+                        </div>
+                        <div class="p-2.5 bg-amber-100 text-amber-700 rounded-xl">
+                            <i data-lucide="layers" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span class="text-slate-500">Acuan Beli / Jual:</span>
+                        <span id="card-harga-gabah" class="font-bold text-slate-700">Rp 6.800 / Rp 7.300</span>
+                    </div>
+                </div>
+
+                <!-- Kartu 2: Sisa Stok Beras -->
+                <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-padi-700 bg-padi-50 px-2.5 py-1 rounded-lg inline-block mb-1.5">Sisa Stok Beras</p>
+                            <h2 id="card-stok-beras-kg" class="text-2xl font-extrabold text-slate-900 tracking-tight">0 kg</h2>
+                            <p id="card-stok-beras-ton" class="text-xs font-medium text-slate-500 mt-1">0,00 Ton • Nilai: Rp 0</p>
+                        </div>
+                        <div class="p-2.5 bg-padi-100 text-padi-700 rounded-xl">
+                            <i data-lucide="package-check" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span class="text-slate-500">Acuan Beli / Jual:</span>
+                        <span id="card-harga-beras" class="font-bold text-slate-700">Rp 12.200 / Rp 13.500</span>
+                    </div>
+                </div>
+
+                <!-- Kartu 3: Modal Uang Tersisa -->
+                <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg inline-block mb-1.5">Modal Uang Tersisa</p>
+                            <h2 id="card-modal-uang" class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Rp 0</h2>
+                            <p id="card-total-modal-disetor" class="text-xs font-medium text-slate-500 mt-1">Modal Disetor: Rp 0</p>
+                        </div>
+                        <div class="p-2.5 bg-blue-100 text-blue-700 rounded-xl">
+                            <i data-lucide="wallet" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span class="text-slate-500">Modal Beredar:</span>
+                        <span id="card-modal-beredar" class="font-bold text-blue-700">Rp 0</span>
+                    </div>
+                </div>
+
+                <!-- Kartu 4: Status Keuangan Otomatis + Pintasan Grafik -->
+                <div id="card-status-container" class="bg-white rounded-2xl p-4 sm:p-5 border-2 border-emerald-200 shadow-xs hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between gap-2 mb-1.5">
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Status Keuangan</span>
+                            <button onclick="switchMainView('view-grafik')" class="text-[11px] font-bold text-indigo-600 hover:underline flex items-center gap-1 cursor-pointer">
+                                <span>Lihat Grafik</span>
+                                <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                        <div id="status-badge" class="inline-block px-2.5 py-1 rounded-lg text-xs font-extrabold bg-emerald-100 text-emerald-800 mb-1">
+                            MENGHITUNG...
+                        </div>
+                        <p id="status-saldo-bersih" class="text-sm font-extrabold text-slate-900">Saldo Akhir: Rp 0</p>
+                    </div>
+                    <div class="mt-2.5 pt-2 border-t border-slate-100">
+                        <p id="status-formula-desc" class="text-[11px] leading-snug text-slate-600 line-clamp-2">
+                            Menghitung likuiditas...
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ======================================================================= -->
+        <!-- VIEW 1: DASHBOARD UTAMA — TRANSAKSI JUAL & BELI (GABAH ATAU BERAS)      -->
+        <!-- ======================================================================= -->
+        <div id="view-dashboard" class="space-y-6">
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- PANEL KIRI (7 Kolom): FORM TRANSAKSI JUAL & BELI GABAH / BERAS -->
+                <div class="lg:col-span-7 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-xs">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-5">
+                        <div>
+                            <h2 class="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                                <i data-lucide="arrow-left-right" class="w-5 h-5 text-padi-600"></i>
+                                <span>Transaksi Jual & Beli</span>
+                            </h2>
+                            <p class="text-xs text-slate-500">Pilih jenis transaksi, komoditas (Gabah / Beras), dan tetapkan harga per kg.</p>
+                        </div>
+                        <button type="button" onclick="openPriceSettingsModal()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition inline-flex items-center gap-1.5 cursor-pointer">
+                            <i data-lucide="tag" class="w-3.5 h-3.5"></i>
+                            <span>Atur Daftar Harga</span>
+                        </button>
+                    </div>
+
+                    <form id="form-jual-beli" class="space-y-4">
+                        <!-- STEP 1: PILIH JENIS TRANSAKSI (BELI vs JUAL) -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">1. Pilih Jenis Transaksi</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button type="button" id="btn-mode-beli" onclick="setTradeMode('BELI')" class="py-3 px-4 rounded-xl border-2 border-amber-500 bg-amber-50 text-amber-900 font-extrabold text-sm flex items-center justify-center gap-2 transition cursor-pointer shadow-xs">
+                                    <i data-lucide="arrow-down-left" class="w-5 h-5 text-amber-600"></i>
+                                    <span>BELI (Stok Masuk)</span>
+                                </button>
+                                <button type="button" id="btn-mode-jual" onclick="setTradeMode('JUAL')" class="py-3 px-4 rounded-xl border-2 border-slate-200 bg-white text-slate-600 hover:bg-slate-50 font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer">
+                                    <i data-lucide="arrow-up-right" class="w-5 h-5 text-emerald-600"></i>
+                                    <span>JUAL (Stok Keluar)</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- STEP 2: PILIH KOMODITAS (GABAH vs BERAS) -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">2. Pilih Komoditas</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button type="button" id="btn-comm-gabah" onclick="setCommodity('GABAH')" class="py-3 px-4 rounded-xl border-2 border-padi-600 bg-padi-50 text-padi-900 font-extrabold text-sm flex items-center justify-center gap-2 transition cursor-pointer shadow-xs">
+                                    <i data-lucide="wheat" class="w-5 h-5 text-padi-600"></i>
+                                    <span>GABAH</span>
+                                </button>
+                                <button type="button" id="btn-comm-beras" onclick="setCommodity('BERAS')" class="py-3 px-4 rounded-xl border-2 border-slate-200 bg-white text-slate-600 hover:bg-slate-50 font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer">
+                                    <i data-lucide="package" class="w-5 h-5 text-emerald-600"></i>
+                                    <span>BERAS</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- STEP 3: BERAT (KG) & TETAPKAN HARGA PER KG -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                            <div>
+                                <label id="label-input-berat" class="block text-xs font-bold text-slate-700 mb-1.5">Berat Gabah (kg)</label>
+                                <div class="relative">
+                                    <input type="number" id="jb-berat" min="1" step="0.5" required placeholder="Contoh: 1000" oninput="calculateTradeTotal()" class="w-full rounded-xl border border-slate-300 bg-white pl-3.5 pr-12 py-2.5 text-base font-extrabold text-slate-900 focus:ring-2 focus:ring-padi-500 outline-none">
+                                    <span class="absolute right-3.5 top-3 text-xs font-bold text-slate-400">KG</span>
+                                </div>
+                                <p id="info-stok-tersedia" class="text-[11px] text-slate-500 mt-1">Stok saat ini: 0 kg</p>
+                            </div>
+
+                            <div>
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <label class="block text-xs font-bold text-slate-700">Harga per Kg (Rp)</label>
+                                    <button type="button" onclick="saveCurrentPriceAsDefault()" class="text-[11px] font-bold text-padi-700 hover:underline cursor-pointer" title="Simpan harga ini sebagai harga acuan berikutnya">
+                                        Tetapkan Default
+                                    </button>
+                                </div>
+                                <div class="relative">
+                                    <span class="absolute left-3.5 top-2.5 text-sm font-bold text-slate-400">Rp</span>
+                                    <input type="number" id="jb-harga" min="100" step="50" required oninput="calculateTradeTotal()" class="w-full rounded-xl border border-slate-300 bg-white pl-10 pr-3.5 py-2.5 text-base font-extrabold text-slate-900 focus:ring-2 focus:ring-padi-500 outline-none">
+                                </div>
+                                <p class="text-[11px] text-slate-500 mt-1">Bisa diubah langsung tiap transaksi</p>
+                            </div>
+                        </div>
+
+                        <!-- KOTAK TOTAL NOMINAL TRANSAKSI -->
+                        <div class="p-4 rounded-2xl bg-slate-900 text-white flex items-center justify-between">
+                            <div>
+                                <span id="summary-trx-label" class="text-xs text-slate-300 block">Total Pembelian Gabah</span>
+                                <span id="summary-trx-formula" class="text-[11px] text-slate-400">0 kg × Rp 0 / kg</span>
+                            </div>
+                            <div id="jb-total-display" class="text-xl sm:text-2xl font-extrabold text-amber-400 tracking-tight">
+                                Rp 0
+                            </div>
+                        </div>
+
+                        <!-- STEP 4: PIHAK TERKAIT, METODE PEMBAYARAN & TANGGAL -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label id="label-jb-pihak" class="block text-xs font-semibold text-slate-700 mb-1">Nama Petani / Pemasok</label>
+                                <input type="text" id="jb-pihak" placeholder="Contoh: Dg. Talli" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-padi-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Metode Pembayaran</label>
+                                <select id="jb-metode" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-padi-500 outline-none bg-white">
+                                    <option value="TUNAI">Tunai / Lunas</option>
+                                    <option value="TEMPO">Tempo (Utang / Piutang)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Tanggal</label>
+                                <input type="date" id="jb-tanggal" required class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-padi-500 outline-none">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Keterangan / Varietas (Opsional)</label>
+                            <input type="text" id="jb-catatan" placeholder="Contoh: Gabah kering panen Ciherang / Beras kepala karung 50kg..." class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:ring-2 focus:ring-padi-500 outline-none">
+                        </div>
+
+                        <div class="pt-1 flex flex-wrap items-center justify-between gap-3">
+                            <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-600 cursor-pointer">
+                                <input type="checkbox" id="jb-auto-print" checked class="rounded text-padi-600 focus:ring-padi-500 w-4 h-4">
+                                <span>Buka pratinjau struk thermal setelah simpan</span>
+                            </label>
+                            <button type="submit" id="btn-submit-jb" class="w-full sm:w-auto px-6 py-3 rounded-xl bg-padi-600 hover:bg-padi-700 text-white font-extrabold text-sm shadow-md shadow-padi-600/20 transition flex items-center justify-center gap-2 cursor-pointer">
+                                <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                                <span>Simpan Transaksi Beli Gabah</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- PANEL KANAN (5 Kolom): DAFTAR HARGA ACUAN AKTIF + RINGKASAN UTANG/PIUTANG CEPAT -->
+                <div class="lg:col-span-5 space-y-6">
+                    
+                    <!-- Kartu Daftar Harga Acuan Toko -->
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                                <i data-lucide="tags" class="w-4 h-4 text-amber-600"></i>
+                                <span>Daftar Harga Berlaku Saat Ini</span>
+                            </h3>
+                            <button onclick="openPriceSettingsModal()" class="text-xs font-bold text-padi-700 hover:underline cursor-pointer">Ubah Harga</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2.5 text-xs">
+                            <div class="p-3 rounded-xl bg-amber-50/80 border border-amber-200">
+                                <span class="text-amber-800 font-semibold block">Beli Gabah</span>
+                                <span id="disp-harga-beli-gabah" class="text-base font-extrabold text-slate-900">Rp 6.800</span>
+                                <span class="text-[10px] text-slate-500 block">/ kilogram</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-amber-50/40 border border-amber-200/70">
+                                <span class="text-amber-800 font-semibold block">Jual Gabah</span>
+                                <span id="disp-harga-jual-gabah" class="text-base font-extrabold text-slate-900">Rp 7.300</span>
+                                <span class="text-[10px] text-slate-500 block">/ kilogram</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-padi-50/40 border border-padi-200/70">
+                                <span class="text-padi-800 font-semibold block">Beli Beras</span>
+                                <span id="disp-harga-beli-beras" class="text-base font-extrabold text-slate-900">Rp 12.200</span>
+                                <span class="text-[10px] text-slate-500 block">/ kilogram</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-padi-50/80 border border-padi-200">
+                                <span class="text-padi-800 font-semibold block">Jual Beras</span>
+                                <span id="disp-harga-jual-beras" class="text-base font-extrabold text-slate-900">Rp 13.500</span>
+                                <span class="text-[10px] text-slate-500 block">/ kilogram</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Kartu Ringkas Utang & Piutang Aktif (Dengan Pelunasan Cepat) -->
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                                <i data-lucide="book-open-check" class="w-4 h-4 text-indigo-600"></i>
+                                <span>Tagihan Piutang & Kewajiban Utang</span>
+                            </h3>
+                            <button onclick="switchMainView('view-grafik')" class="text-xs font-bold text-indigo-600 hover:underline cursor-pointer">Analisis Grafik →</button>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200">
+                                <span class="text-[11px] font-semibold text-emerald-700 block">Piutang (Tagihan)</span>
+                                <span id="dash-total-piutang" class="text-sm sm:text-base font-extrabold text-emerald-900">Rp 0</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-rose-50 border border-rose-200">
+                                <span class="text-[11px] font-semibold text-rose-700 block">Utang (Kewajiban)</span>
+                                <span id="dash-total-utang" class="text-sm sm:text-base font-extrabold text-rose-900">Rp 0</span>
+                            </div>
+                        </div>
+
+                        <!-- Tab Mini Piutang / Utang -->
+                        <div>
+                            <div class="flex gap-2 border-b border-slate-200 pb-2 mb-2.5">
+                                <button type="button" id="mini-tab-piutang" onclick="switchMiniUP('PIUTANG')" class="px-3 py-1 rounded-lg text-xs font-bold bg-emerald-600 text-white cursor-pointer">Piutang Aktif</button>
+                                <button type="button" id="mini-tab-utang" onclick="switchMiniUP('UTANG')" class="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 cursor-pointer">Utang Aktif</button>
+                                <button type="button" id="mini-tab-tambah-up" onclick="switchMiniUP('TAMBAH')" class="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 cursor-pointer">+ Catat Baru</button>
+                            </div>
+
+                            <!-- List Piutang -->
+                            <div id="mini-list-piutang" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
+                            <!-- List Utang -->
+                            <div id="mini-list-utang" class="hidden space-y-2 max-h-56 overflow-y-auto pr-1"></div>
+                            <!-- Form Catat Utang/Piutang Manual -->
+                            <form id="form-utang-piutang" class="hidden space-y-2.5 pt-1">
+                                <div class="grid grid-cols-2 gap-2">
+                                    <select id="up-tipe" class="rounded-xl border border-slate-300 px-2.5 py-2 text-xs font-bold bg-white">
+                                        <option value="PIUTANG">📗 Piutang Pelanggan</option>
+                                        <option value="UTANG">📕 Utang ke Petani</option>
+                                    </select>
+                                    <input type="text" id="up-pihak" required placeholder="Nama Pihak" class="rounded-xl border border-slate-300 px-2.5 py-2 text-xs">
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input type="number" id="up-nominal" min="1000" required placeholder="Nominal (Rp)" class="rounded-xl border border-slate-300 px-2.5 py-2 text-xs font-bold">
+                                    <input type="date" id="up-tempo" required class="rounded-xl border border-slate-300 px-2.5 py-2 text-xs" title="Jatuh Tempo">
+                                </div>
+                                <input type="text" id="up-keterangan" required placeholder="Keterangan utang / piutang..." class="w-full rounded-xl border border-slate-300 px-2.5 py-2 text-xs">
+                                <button type="submit" class="w-full py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer">Simpan Utang / Piutang</button>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- RIWAYAT TRANSAKSI JUAL & BELI TERBARU (DENGAN CETAK STRUK THERMAL TANPA SISA STOK) -->
+            <section class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-xs">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h3 class="text-base sm:text-lg font-extrabold text-slate-900">Riwayat Transaksi Jual & Beli</h3>
+                        <p class="text-xs text-slate-500">Klik tombol <b>Struk</b> untuk mencetak bukti transaksi thermal (hanya nominal & rincian transaksi, tanpa sisa stok).</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <select id="filter-trx-jenis" onchange="renderTransaksiTable()" class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold bg-white">
+                            <option value="ALL">Semua Transaksi</option>
+                            <option value="BELI">Transaksi Beli</option>
+                            <option value="JUAL">Transaksi Jual</option>
+                            <option value="GILING_GABAH">Proses Giling</option>
+                            <option value="PELUNASAN">Pelunasan Utang/Piutang</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-[11px] font-bold uppercase text-slate-500 bg-slate-50/80">
+                                <th class="py-3 px-3 rounded-tl-xl">No. Nota & Tgl</th>
+                                <th class="py-3 px-3">Transaksi</th>
+                                <th class="py-3 px-3">Pihak & Ket</th>
+                                <th class="py-3 px-3">Volume & Harga</th>
+                                <th class="py-3 px-3">Nominal Total</th>
+                                <th class="py-3 px-3 text-right rounded-tr-xl">Cetak Struk</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-transaksi" class="divide-y divide-slate-100 text-xs sm:text-sm">
+                            <!-- Diisi via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- ======================================================================= -->
+        <!-- VIEW 2: FITUR KHUSUS GRAFIK & ANALISIS KEUANGAN                         -->
+        <!-- ======================================================================= -->
+        <div id="view-grafik" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-lg font-extrabold text-slate-900">Fitur Khusus: Grafik & Analisis Kesehatan Keuangan</h2>
+                    <p class="text-xs text-slate-500">Visualisasi khusus perbandingan Utang vs Piutang serta grafik gabungan Selisih Utang-Piutang dengan Modal Beredar.</p>
+                </div>
+                <button onclick="switchMainView('view-dashboard')" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 transition cursor-pointer">
+                    ← Kembali ke Transaksi
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Grafik 1: Grafik Khusus Utang & Piutang (5 Kolom) -->
+                <div class="lg:col-span-5 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-xs flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between gap-2 mb-1">
+                            <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                                <span>Grafik Khusus Utang & Piutang</span>
+                            </h3>
+                            <span id="badge-selisih-up" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700">Selisih: Rp 0</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-4">Perbandingan tagihan piutang pelanggan terhadap utang usaha ke petani/pemasok.</p>
+                        
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            <div class="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200">
+                                <span class="text-[11px] font-semibold text-emerald-700 block">Total Piutang (Tagihan)</span>
+                                <span id="summary-total-piutang" class="text-sm sm:text-base font-extrabold text-emerald-900">Rp 0</span>
+                                <span id="count-piutang-aktif" class="text-[11px] text-emerald-600 block mt-0.5">0 tagihan aktif</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-rose-50/70 border border-rose-200">
+                                <span class="text-[11px] font-semibold text-rose-700 block">Total Utang (Kewajiban)</span>
+                                <span id="summary-total-utang" class="text-sm sm:text-base font-extrabold text-rose-900">Rp 0</span>
+                                <span id="count-utang-aktif" class="text-[11px] text-rose-600 block mt-0.5">0 utang aktif</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="relative h-64 w-full">
+                        <canvas id="chartUtangPiutang"></canvas>
+                    </div>
+                </div>
+
+                <!-- Grafik 2: Grafik Gabungan Selisih Utang-Piutang & Modal Beredar (7 Kolom) -->
+                <div class="lg:col-span-7 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-xs flex flex-col justify-between">
+                    <div>
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+                            <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+                                <span>Grafik Gabungan: Selisih Utang-Piutang & Modal Beredar</span>
+                            </h3>
+                            <span class="text-xs font-semibold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100">Rumus Status Keuangan</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-4">Menggabungkan Modal Uang Tersisa, Nilai Stok Fisik (Gabah + Beras), Selisih Piutang-Utang, dan Saldo Bersih Usaha.</p>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4 text-xs">
+                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                                <span class="text-slate-500 block text-[11px]">1. Uang Kas Tersisa</span>
+                                <span id="comp-uang-tersisa" class="font-bold text-blue-700 text-xs sm:text-sm">Rp 0</span>
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                                <span class="text-slate-500 block text-[11px]">2. Nilai Stok Fisik</span>
+                                <span id="comp-nilai-stok" class="font-bold text-amber-700 text-xs sm:text-sm">Rp 0</span>
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                                <span class="text-slate-500 block text-[11px]">3. Selisih (P - U)</span>
+                                <span id="comp-selisih-pu" class="font-bold text-slate-800 text-xs sm:text-sm">Rp 0</span>
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-indigo-50 border border-indigo-200">
+                                <span class="text-indigo-700 font-semibold block text-[11px]">4. Saldo Bersih Total</span>
+                                <span id="comp-total-bersih" class="font-extrabold text-indigo-900 text-xs sm:text-sm">Rp 0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="relative h-64 w-full">
+                        <canvas id="chartGabunganModal"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================================================================= -->
+        <!-- VIEW 3: INPUT MODAL + KETERANGAN & PROSES GILING PADI                   -->
+        <!-- ======================================================================= -->
+        <div id="view-modal-giling" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Input Modal + Keterangan -->
+            <div class="lg:col-span-6 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-xs">
+                <div class="flex items-center gap-2.5 mb-4">
+                    <div class="p-2 rounded-xl bg-blue-100 text-blue-700">
+                        <i data-lucide="banknote" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">Input Modal & Keterangan</h3>
+                        <p class="text-xs text-slate-500">Catat penambahan modal usaha atau penarikan modal (prive).</p>
+                    </div>
+                </div>
+
+                <form id="form-modal" class="space-y-3.5">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Jenis Mutasi Modal</label>
+                            <select id="modal-jenis" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-medium bg-white">
+                                <option value="TAMBAH">➕ Tambah Modal (+)</option>
+                                <option value="TARIK">➖ Tarik / Prive (-)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Tanggal</label>
+                            <input type="date" id="modal-tanggal" required class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nominal Uang (Rp)</label>
+                        <input type="number" id="modal-nominal" min="1000" step="1000" placeholder="Contoh: 25000000" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Keterangan Modal <span class="text-rose-500">*</span></label>
+                        <textarea id="modal-keterangan" rows="2" required placeholder="Contoh: Tambahan modal pembelian gabah panen Rappokaleleng..." class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm"></textarea>
+                    </div>
+                    <button type="submit" class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-xs transition flex items-center justify-center gap-2 cursor-pointer">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span>Simpan Mutasi Modal</span>
+                    </button>
+                </form>
+
+                <div class="mt-5 pt-4 border-t border-slate-200">
+                    <div class="flex items-center justify-between mb-2.5">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-600">Riwayat Mutasi Modal</h4>
+                        <span id="badge-count-modal" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">0 catatan</span>
+                    </div>
+                    <div id="list-riwayat-modal" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
+                </div>
+            </div>
+
+            <!-- Proses Giling Gabah ke Beras -->
+            <div class="lg:col-span-6 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-xs">
+                <div class="flex items-center gap-2.5 mb-4">
+                    <div class="p-2 rounded-xl bg-amber-100 text-amber-700">
+                        <i data-lucide="settings" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">Proses Giling Gabah → Beras</h3>
+                        <p class="text-xs text-slate-500">Konversi stok gabah menjadi stok beras dengan perhitungan rendemen otomatis.</p>
+                    </div>
+                </div>
+
+                <form id="form-giling-padi" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Tanggal Giling</label>
+                            <input type="date" id="giling-tanggal" required class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Biaya Operasional Giling (Rp)</label>
+                            <input type="number" id="giling-biaya" min="0" value="0" placeholder="Solar / Upah" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-bold">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Gabah Digiling (kg)</label>
+                            <input type="number" id="giling-gabah-kg" min="1" required placeholder="Contoh: 2000" oninput="calcGilingPreview()" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Hasil Beras Jadi (kg)</label>
+                            <input type="number" id="giling-beras-kg" min="1" required placeholder="Contoh: 1300" oninput="calcGilingPreview()" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-bold">
+                        </div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-amber-50 border border-amber-200">
+                        <p id="giling-rendemen-info" class="text-xs font-bold text-amber-900">Rendemen Giling: 0% (Standar 62% - 65%)</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan Penggilingan</label>
+                        <input type="text" id="giling-catatan" placeholder="Contoh: Giling gabah kering varietas Ciherang..." class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                    </div>
+                    <button type="submit" class="w-full py-2.5 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm shadow-xs transition flex items-center justify-center gap-2 cursor-pointer">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        <span>Proses Giling & Update Stok</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER DENGAN INFO PENGEMBANG: UKKIAKKI STUDIO -->
+    <footer class="bg-white border-t border-slate-200 mt-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
+            <div>
+                <span class="font-bold text-slate-800" id="footer-store-name">Toko Kaleleng Indah</span> • <span id="footer-store-address">Rappokaleleng Gowa</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span>Dikembangkan oleh</span>
+                <button onclick="openAppInfoModal()" class="font-bold text-padi-700 hover:underline cursor-pointer">Ukkiakki Studio</button>
+                <span>•</span>
+                <a href="https://wa.me/6285240484045" target="_blank" rel="noopener" class="font-semibold text-emerald-700 hover:underline inline-flex items-center gap-1">
+                    <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+                    <span>0852 4048 4045</span>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ======================================================================= -->
+    <!-- MODAL 1: PENGATURAN TOKO (GANTI NAMA, TAGLINE, ALAMAT, TELP & UBAH LOGO) -->
+    <!-- ======================================================================= -->
+    <div id="modal-store-settings" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 my-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+                <div class="flex items-center gap-2.5">
+                    <div class="p-2 rounded-xl bg-padi-100 text-padi-700">
+                        <i data-lucide="store" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">Pengaturan Identitas & Logo Toko</h3>
+                        <p class="text-xs text-slate-500">Ubah nama toko, tagline, alamat, telepon, atau unggah logo baru.</p>
+                    </div>
+                </div>
+                <button onclick="closeStoreSettingsModal()" class="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="form-store-settings" class="mt-4 space-y-3.5">
+                <!-- Preview & Upload Logo -->
+                <div class="flex items-center gap-4 p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                    <div id="settings-logo-preview" class="w-16 h-16 rounded-2xl bg-gradient-to-br from-padi-600 to-emerald-800 text-amber-300 flex items-center justify-center overflow-hidden shrink-0 border border-slate-300">
+                        <!-- Preview Logo -->
+                    </div>
+                    <div class="flex-1 space-y-1.5">
+                        <label class="block text-xs font-bold text-slate-700">Ganti Logo Toko (PNG/JPG/SVG)</label>
+                        <input type="file" id="set-logo-file" accept="image/*" onchange="handleLogoUpload(event)" class="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-padi-600 file:text-white hover:file:bg-padi-700 cursor-pointer">
+                        <button type="button" onclick="resetLogoToDefault()" class="text-[11px] font-semibold text-rose-600 hover:underline cursor-pointer">Gunakan Logo Bawaan</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Nama Toko / Usaha</label>
+                    <input type="text" id="set-store-name" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm font-bold">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Tagline Usaha</label>
+                    <input type="text" id="set-store-tagline" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Alamat Toko</label>
+                        <input type="text" id="set-store-address" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Nomor Telepon / HP</label>
+                        <input type="text" id="set-store-phone" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm">
+                    </div>
+                </div>
+
+                <div class="pt-3 flex items-center justify-between gap-2 border-t border-slate-100">
+                    <button type="button" onclick="openResetModal()" class="px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 cursor-pointer">Reset Data Pabrik</button>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="closeStoreSettingsModal()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 cursor-pointer">Batal</button>
+                        <button type="submit" class="px-5 py-2 rounded-xl text-xs font-bold bg-padi-600 hover:bg-padi-700 text-white cursor-pointer">Simpan Pengaturan</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- MODAL 2: ATUR DAFTAR HARGA DEFAULT GABAH & BERAS                        -->
+    <!-- ======================================================================= -->
+    <div id="modal-price-settings" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+                <h3 class="text-base font-bold text-slate-900">Tetapkan Harga Acuan (Rp / kg)</h3>
+                <button onclick="closePriceSettingsModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form id="form-price-settings" class="mt-4 space-y-3.5">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-amber-800 mb-1">Harga Beli Gabah (/kg)</label>
+                        <input type="number" id="set-price-beli-gabah" min="100" step="50" required class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-amber-800 mb-1">Harga Jual Gabah (/kg)</label>
+                        <input type="number" id="set-price-jual-gabah" min="100" step="50" required class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-bold">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-padi-800 mb-1">Harga Beli Beras (/kg)</label>
+                        <input type="number" id="set-price-beli-beras" min="100" step="50" required class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-padi-800 mb-1">Harga Jual Beras (/kg)</label>
+                        <input type="number" id="set-price-jual-beras" min="100" step="50" required class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-bold">
+                    </div>
+                </div>
+                <div class="pt-3 flex justify-end gap-2">
+                    <button type="button" onclick="closePriceSettingsModal()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 cursor-pointer">Batal</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl text-xs font-bold bg-padi-600 hover:bg-padi-700 text-white cursor-pointer">Simpan Daftar Harga</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- MODAL 3: PRINTER THERMAL (58mm & 80mm) — TANPA MENCANTUMKAN SISA STOK   -->
+    <!-- ======================================================================= -->
+    <div id="modal-thermal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 my-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+                <div class="flex items-center gap-2.5">
+                    <div class="p-2 rounded-xl bg-slate-900 text-emerald-400">
+                        <i data-lucide="printer" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">Cetak Struk Printer Thermal</h3>
+                        <p class="text-xs text-slate-500">Struk hanya menampilkan rincian & nominal transaksi (tanpa sisa stok).</p>
+                    </div>
+                </div>
+                <button onclick="closeThermalModal()" class="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Pilihan Lebar Kertas Thermal -->
+            <div class="mt-4 flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-200">
+                <span class="text-xs font-bold text-slate-700">Ukuran Kertas Thermal:</span>
+                <div class="flex items-center gap-2">
+                    <button type="button" id="btn-size-58" onclick="setThermalWidth('58')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white cursor-pointer">58 mm</button>
+                    <button type="button" id="btn-size-80" onclick="setThermalWidth('80')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-700 border border-slate-300 cursor-pointer">80 mm</button>
+                </div>
+            </div>
+
+            <!-- Area Pratinjau Struk Thermal -->
+            <div class="mt-4 bg-slate-200/70 p-4 rounded-xl flex justify-center max-h-[55vh] overflow-y-auto">
+                <div id="printable-receipt-area" class="thermal-receipt thermal-58mm print-width-58 p-3.5">
+                    <!-- Konten struk di-render via JS -->
+                </div>
+            </div>
+
+            <div class="mt-5 flex flex-wrap items-center justify-end gap-2.5">
+                <button type="button" onclick="printViaWebBluetooth()" class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition inline-flex items-center gap-2 cursor-pointer">
+                    <i data-lucide="bluetooth" class="w-4 h-4"></i>
+                    <span>Bluetooth Direct</span>
+                </button>
+                <button type="button" onclick="triggerSystemPrint()" class="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-slate-900 hover:bg-slate-800 text-white shadow-sm transition inline-flex items-center gap-2 cursor-pointer">
+                    <i data-lucide="printer" class="w-4 h-4 text-emerald-400"></i>
+                    <span>Cetak Struk</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- MODAL 4: CLOUD SYNC (APPS SCRIPT, GITHUB GIST) & AKSES ONLINE VIA LINK  -->
+    <!-- ======================================================================= -->
+    <div id="modal-cloud" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl border border-slate-200 my-auto max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+                <div class="flex items-center gap-2.5">
+                    <div class="p-2 rounded-xl bg-indigo-100 text-indigo-700">
+                        <i data-lucide="cloud" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">Koneksi Cloud & Akses Online via Link</h3>
+                        <p class="text-xs text-slate-500">Hubungkan ke Google Apps Script, GitHub Gist, atau bagikan link akses online.</p>
+                    </div>
+                </div>
+                <button onclick="closeCloudModal()" class="p-2 rounded-xl text-slate-400 hover:text-slate-700 cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Tabs Cloud -->
+            <div class="flex flex-wrap gap-2 mt-4 border-b border-slate-200 pb-3">
+                <button type="button" id="ctab-appscript" onclick="switchCloudTab('panel-appscript')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white cursor-pointer">Google Apps Script</button>
+                <button type="button" id="ctab-github" onclick="switchCloudTab('panel-github')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 cursor-pointer">GitHub Gist & Hosting</button>
+                <button type="button" id="ctab-link" onclick="switchCloudTab('panel-sharelink')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 cursor-pointer">Link Akses Online & Backup</button>
+            </div>
+
+            <!-- PANEL A: GOOGLE APPS SCRIPT -->
+            <div id="panel-appscript" class="mt-4 space-y-4">
+                <div class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 space-y-1">
+                    <p class="font-bold">Cara Menghubungkan ke Google Sheets / Apps Script:</p>
+                    <p>1. Buka Google Sheets baru → menu <b>Extensions &gt; Apps Script</b>, tempel kode di bawah, lalu klik <b>Deploy &gt; New Deployment &gt; Web App (Anyone)</b>.</p>
+                    <p>2. Salin URL Web App (`https://script.google.com/macros/s/.../exec`) dan tempel di kolom berikut.</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">URL Web App Google Apps Script</label>
+                    <input type="url" id="cloud-gas-url" placeholder="https://script.google.com/macros/s/AKfycb.../exec" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs sm:text-sm font-mono">
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <label class="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+                        <input type="checkbox" id="cloud-gas-autosync" class="rounded text-emerald-600 w-4 h-4">
+                        <span>Auto-Sync otomatis setiap kali simpan transaksi</span>
+                    </label>
+                    <button type="button" onclick="saveCloudConfig()" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white cursor-pointer">Simpan URL</button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 pt-1">
+                    <button type="button" onclick="syncToGoogleAppsScript('PUSH')" class="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-2 cursor-pointer">
+                        <i data-lucide="cloud-upload" class="w-4 h-4"></i>
+                        <span>Kirim Data ke Cloud (Push)</span>
+                    </button>
+                    <button type="button" onclick="syncToGoogleAppsScript('PULL')" class="py-2.5 px-4 rounded-xl bg-white border border-emerald-600 text-emerald-700 hover:bg-emerald-50 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer">
+                        <i data-lucide="cloud-download" class="w-4 h-4"></i>
+                        <span>Ambil Data dari Cloud (Pull)</span>
+                    </button>
+                </div>
+
+                <!-- Kode Apps Script Siap Salin -->
+                <div class="pt-2">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-xs font-bold text-slate-700">Kode Google Apps Script (`Code.gs`) Siap Pakai:</span>
+                        <button type="button" onclick="copyAppsScriptCode()" class="text-xs font-bold text-indigo-600 hover:underline inline-flex items-center gap-1 cursor-pointer">
+                            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                            <span>Salin Kode</span>
+                        </button>
+                    </div>
+                    <textarea id="gas-code-template" readonly rows="6" class="w-full rounded-xl bg-slate-900 text-emerald-300 font-mono text-[11px] p-3 outline-none">function doGet(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("DB_KALELENG") || SpreadsheetApp.getActiveSpreadsheet().insertSheet("DB_KALELENG");
+  var json = sheet.getRange("A1").getValue() || "{}";
+  return ContentService.createTextOutput(json).setMimeType(ContentService.MimeType.JSON);
+}
+function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("DB_KALELENG") || SpreadsheetApp.getActiveSpreadsheet().insertSheet("DB_KALELENG");
+  var body = e.postData.contents;
+  sheet.getRange("A1").setValue(body);
+  sheet.getRange("B1").setValue(new Date());
+  return ContentService.createTextOutput(JSON.stringify({status: "OK", updated: new Date()})).setMimeType(ContentService.MimeType.JSON);
+}</textarea>
+                </div>
+            </div>
+
+            <!-- PANEL B: GITHUB GIST & GITHUB PAGES -->
+            <div id="panel-github" class="hidden mt-4 space-y-4">
+                <div class="p-3.5 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-700 space-y-1">
+                    <p class="font-bold text-slate-900">1. Sinkronisasi Database via GitHub Gist API:</p>
+                    <p>Simpan database toko ke GitHub Gist pribadi menggunakan GitHub Personal Access Token (scope: <code>gist</code>).</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">GitHub Personal Access Token</label>
+                        <input type="password" id="cloud-gh-token" placeholder="ghp_xxxxxxxxxxxx" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Gist ID (Kosongkan untuk buat baru)</label>
+                        <input type="text" id="cloud-gh-gistid" placeholder="Otomatis terisi saat Push pertama" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-mono">
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" onclick="saveCloudConfig()" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-white cursor-pointer">Simpan Kredensial GitHub</button>
+                    <button type="button" onclick="syncToGitHubGist('PUSH')" class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white cursor-pointer">Backup ke GitHub Gist</button>
+                    <button type="button" onclick="syncToGitHubGist('PULL')" class="px-4 py-2 rounded-xl text-xs font-bold bg-white border border-indigo-600 text-indigo-700 cursor-pointer">Restore dari Gist</button>
+                </div>
+
+                <div class="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900 space-y-1">
+                    <p class="font-bold">2. Cara Membuat Link Online Permanen di GitHub Pages:</p>
+                    <p>Unduh file aplikasi HTML ini, unggah ke repositori GitHub sebagai <code>index.html</code>, lalu aktifkan <b>Settings &gt; Pages &gt; Branch: main</b>. Aplikasi Toko Kaleleng Indah langsung memiliki link online HTTPS (misal: <code>https://username.github.io/toko-kaleleng-indah</code>) yang bisa dibuka dari HP mana saja.</p>
+                </div>
+            </div>
+
+            <!-- PANEL C: SHAREABLE ONLINE LINK & EXPORT/IMPORT JSON -->
+            <div id="panel-sharelink" class="hidden mt-4 space-y-4">
+                <div class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
+                    <p class="font-bold">Bagikan Link Akses Online (Snapshot Data Terenkode):</p>
+                    <p class="mt-0.5">Buat tautan khusus yang membawa seluruh data stok, harga, dan transaksi toko Anda. Jika link ini dibuka di perangkat/HP lain, data toko otomatis termuat.</p>
+                </div>
+
+                <div class="flex gap-2">
+                    <input type="text" id="shareable-url-output" readonly placeholder="Klik tombol Buat Link untuk menghasilkan tautan..." class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-mono">
+                    <button type="button" onclick="generateShareableLink()" class="px-4 py-2 rounded-xl bg-padi-600 text-white text-xs font-bold shrink-0 cursor-pointer">Buat Link</button>
+                    <button type="button" onclick="copyShareableLink()" class="px-3.5 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold shrink-0 cursor-pointer">Salin</button>
+                </div>
+
+                <div class="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <p class="text-xs font-bold text-slate-800">Cadangan File Lokal (.JSON)</p>
+                        <p class="text-[11px] text-slate-500">Unduh atau pulihkan seluruh database toko ke file JSON.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="exportDatabaseJSON()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold cursor-pointer">Export JSON</button>
+                        <label class="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold cursor-pointer">
+                            Import JSON
+                            <input type="file" accept=".json" onchange="importDatabaseJSON(event)" class="hidden">
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- MODAL 5: INFO APLIKASI (UKKIAKKI STUDIO)                                -->
+    <!-- ======================================================================= -->
+    <div id="modal-app-info" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 text-center">
+            <div class="w-16 h-16 mx-auto rounded-2xl bg-slate-900 text-amber-400 flex items-center justify-center shadow-lg mb-3">
+                <i data-lucide="code-2" class="w-8 h-8"></i>
+            </div>
+            <span class="text-[11px] font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-padi-100 text-padi-800">Informasi Aplikasi</span>
+            <h3 class="text-xl font-extrabold text-slate-900 mt-2">Sistem Kasir & Stok Gabah/Beras</h3>
+            <p class="text-xs text-slate-500 mt-1">Edisi Khusus: <b class="text-slate-800">Toko Kaleleng Indah</b> (Rappokaleleng Gowa)</p>
+
+            <div class="mt-4 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left space-y-2 text-xs">
+                <div class="flex justify-between">
+                    <span class="text-slate-500">Pengembang / Studio:</span>
+                    <span class="font-extrabold text-slate-900">Ukkiakki Studio</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">Kontak / WhatsApp:</span>
+                    <span class="font-bold text-emerald-700">0852 4048 4045</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">Dukungan Perangkat:</span>
+                    <span class="font-semibold text-slate-700">HP, Tablet, PC & Thermal 58/80mm</span>
+                </div>
+            </div>
+
+            <div class="mt-5 flex items-center justify-center gap-2.5">
+                <a href="https://wa.me/6285240484045?text=Halo%20Ukkiakki%20Studio,%20saya%20ingin%20bertanya%20tentang%20aplikasi%20Toko%20Kaleleng%20Indah" target="_blank" rel="noopener" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center gap-1.5">
+                    <i data-lucide="message-circle" class="w-4 h-4"></i>
+                    <span>Hubungi Ukkiakki Studio</span>
+                </a>
+                <button onclick="closeAppInfoModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold cursor-pointer">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL KONFIRMASI RESET DATA -->
+    <div id="modal-reset" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200">
+            <div class="flex items-center gap-3 text-rose-600 mb-3">
+                <div class="p-2.5 rounded-xl bg-rose-100">
+                    <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900">Reset ke Data Contoh Awal?</h3>
+            </div>
+            <p class="text-sm text-slate-600 leading-relaxed mb-5">
+                Seluruh data stok gabah, stok beras, mutasi modal, utang, piutang, dan riwayat transaksi akan dikembalikan ke data awal <b>Toko Kaleleng Indah</b>.
+            </p>
+            <div class="flex items-center justify-end gap-3">
+                <button onclick="closeResetModal()" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 cursor-pointer">Batal</button>
+                <button onclick="confirmResetData()" class="px-4 py-2 rounded-xl text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 cursor-pointer">Ya, Reset Data</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT APLIKASI UTAMA -->
+    <script>
+        // =========================================================================
+        // 1. STATE, IDENTITAS TOKO KALELENG INDAH & MIGRASI DATA LOCALSTORAGE
+        // =========================================================================
+        const STORAGE_KEY = 'srirejeki_mill_dashboard_v1'; // Mempertahankan key lama agar data pengguna tidak hilang
+
+        const DEFAULT_LOGO_SVG = `
+            <svg viewBox="0 0 64 64" class="w-9 h-9" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="32" cy="32" r="28" stroke="#FCD34D" stroke-width="2" stroke-dasharray="4 3"/>
+                <path d="M32 50V16" stroke="#FDE68A" stroke-width="2.5" stroke-linecap="round"/>
+                <path d="M32 42C24 42 19 36 19 29C25 29 31 34 32 42Z" fill="#FBBF24"/>
+                <path d="M32 42C40 42 45 36 45 29C39 29 33 34 32 42Z" fill="#F59E0B"/>
+                <path d="M32 31C25 31 21 26 21 20C26 20 31 24 32 31Z" fill="#FDE047"/>
+                <path d="M32 31C39 31 43 26 43 20C38 20 33 24 32 31Z" fill="#FBBF24"/>
+                <circle cx="32" cy="14" r="3.5" fill="#FEF08A"/>
+            </svg>
+        `;
+
+        const DEFAULT_STATE = {
+            storeProfile: {
+                name: 'Toko Kaleleng Indah',
+                tagline: 'Jual Beli Gabah',
+                address: 'Rappokaleleng Gowa',
+                phone: '0852 4048 4045',
+                logoBase64: ''
+            },
+            prices: {
+                beliGabah: 6800,
+                jualGabah: 7300,
+                beliBeras: 12200,
+                jualBeras: 13500
+            },
+            cloudConfig: {
+                gasUrl: '',
+                gasAutoSync: false,
+                ghToken: '',
+                ghGistId: ''
+            },
+            stokGabahKg: 14500,
+            hargaRataGabah: 6800,
+            stokBerasKg: 6200,
+            hargaJualBeras: 13500,
+            modalUangTersisa: 118500000,
+            riwayatModal: [
+                {
+                    id: 'MOD-001',
+                    tanggal: '2026-10-01',
+                    jenis: 'TAMBAH',
+                    nominal: 200000000,
+                    keterangan: 'Modal awal operasional Toko Kaleleng Indah Rappokaleleng'
+                },
+                {
+                    id: 'MOD-002',
+                    tanggal: '2026-10-25',
+                    jenis: 'TAMBAH',
+                    nominal: 65000000,
+                    keterangan: 'Suntikan modal tambahan serap gabah panen Gowa'
+                },
+                {
+                    id: 'MOD-003',
+                    tanggal: '2026-11-05',
+                    jenis: 'TARIK',
+                    nominal: 10000000,
+                    keterangan: 'Penarikan prive & biaya operasional kendaraan angkut'
+                }
+            ],
+            utangList: [
+                {
+                    id: 'UTG-101',
+                    pihak: 'Kelompok Tani Rappokaleleng',
+                    nominal: 24500000,
+                    tanggal: '2026-11-08',
+                    jatuhTempo: '2026-11-22',
+                    keterangan: 'Sisa pembayaran 3.600 kg Gabah GKG',
+                    status: 'BELUM_LUNAS'
+                },
+                {
+                    id: 'UTG-102',
+                    pihak: 'H. Abdurrahman (Pengepul)',
+                    nominal: 14000000,
+                    tanggal: '2026-11-11',
+                    jatuhTempo: '2026-11-25',
+                    keterangan: 'Pembelian tempo 2.050 kg Gabah Kering Panen',
+                    status: 'BELUM_LUNAS'
+                }
+            ],
+            piutangList: [
+                {
+                    id: 'PTG-201',
+                    pihak: 'Agen Beras Sungguminasa',
+                    nominal: 33750000,
+                    tanggal: '2026-11-09',
+                    jatuhTempo: '2026-11-23',
+                    keterangan: 'Pengiriman 2.500 kg Beras Medium Super',
+                    status: 'BELUM_LUNAS'
+                },
+                {
+                    id: 'PTG-202',
+                    pihak: 'Toko Sembako Berkah Gowa',
+                    nominal: 19600000,
+                    tanggal: '2026-11-12',
+                    jatuhTempo: '2026-11-26',
+                    keterangan: 'Pengiriman 1.400 kg Beras Kepala',
+                    status: 'BELUM_LUNAS'
+                }
+            ],
+            transaksiList: [
+                {
+                    id: 'TRX-9004',
+                    tanggal: '2026-11-14',
+                    jenis: 'JUAL_BERAS',
+                    judul: 'Jual Beras (Tempo)',
+                    pihak: 'Toko Sembako Berkah Gowa',
+                    komoditas: 'BERAS',
+                    arah: 'JUAL',
+                    beratKg: 600,
+                    hargaPerKg: 13500,
+                    mutasiStok: '-600 kg Beras',
+                    nominal: 8100000,
+                    arusKas: 0,
+                    catatan: 'Pasokan rutin 600 kg Beras Kemasan @ Rp 13.500/kg'
+                },
+                {
+                    id: 'TRX-9002',
+                    tanggal: '2026-11-12',
+                    jenis: 'JUAL_BERAS',
+                    judul: 'Jual Beras (Tunai)',
+                    pihak: 'CV. Pangan Makassar',
+                    komoditas: 'BERAS',
+                    arah: 'JUAL',
+                    beratKg: 1500,
+                    hargaPerKg: 13500,
+                    mutasiStok: '-1.500 kg Beras',
+                    nominal: 20250000,
+                    arusKas: 20250000,
+                    catatan: 'Penjualan tunai 1.500 kg @ Rp 13.500/kg'
+                },
+                {
+                    id: 'TRX-9001',
+                    tanggal: '2026-11-10',
+                    jenis: 'BELI_GABAH',
+                    judul: 'Beli Gabah (Tunai)',
+                    pihak: 'Dg. Karman (Petani)',
+                    komoditas: 'GABAH',
+                    arah: 'BELI',
+                    beratKg: 4000,
+                    hargaPerKg: 6800,
+                    mutasiStok: '+4.000 kg Gabah',
+                    nominal: 27200000,
+                    arusKas: -27200000,
+                    catatan: 'Pembelian tunai gabah kering @ Rp 6.800/kg'
+                }
+            ]
+        };
+
+        let appState = loadState();
+        let currentTradeMode = 'BELI';     // 'BELI' atau 'JUAL'
+        let currentCommodity = 'GABAH';    // 'GABAH' atau 'BERAS'
+        let chartUtangPiutangInstance = null;
+        let chartGabunganInstance = null;
+        let currentThermalWidth = '58';
+        let currentReceiptRawText = '';
+
+        function loadState() {
+            // Cek apakah ada data snapshot yang dibagikan lewat URL Hash (#data=...)
+            try {
+                if (window.location.hash && window.location.hash.startsWith('#data=')) {
+                    const encoded = window.location.hash.replace('#data=', '');
+                    const decodedJson = decodeURIComponent(escape(atob(encoded)));
+                    const imported = JSON.parse(decodedJson);
+                    if (imported && typeof imported.stokGabahKg === 'number') {
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(imported));
+                        history.replaceState(null, '', window.location.pathname + window.location.search);
+                        setTimeout(() => showToast('Data toko berhasil dimuat dari Link Online!', 'success'), 500);
+                        return migrateState(imported);
+                    }
+                }
+            } catch (err) {
+                console.warn('Gagal membaca snapshot link:', err);
+            }
+
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    return migrateState(JSON.parse(saved));
+                }
+            } catch (e) {
+                console.error('Gagal memuat LocalStorage:', e);
+            }
+            return JSON.parse(JSON.stringify(DEFAULT_STATE));
+        }
+
+        // Migrasi otomatis agar data lama tetap aman + identitas Toko Kaleleng Indah terpasang
+        function migrateState(parsed) {
+            const merged = Object.assign({}, JSON.parse(JSON.stringify(DEFAULT_STATE)), parsed);
+            if (!parsed.storeProfile) {
+                merged.storeProfile = JSON.parse(JSON.stringify(DEFAULT_STATE.storeProfile));
+            }
+            if (!parsed.prices) {
+                merged.prices = {
+                    beliGabah: parsed.hargaRataGabah || 6800,
+                    jualGabah: (parsed.hargaRataGabah || 6800) + 500,
+                    beliBeras: 12200,
+                    jualBeras: parsed.hargaJualBeras || 13500
+                };
+            }
+            if (!parsed.cloudConfig) {
+                merged.cloudConfig = JSON.parse(JSON.stringify(DEFAULT_STATE.cloudConfig));
+            }
+            return merged;
+        }
+
+        function saveState(triggerAutoCloud = true) {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+                if (triggerAutoCloud && appState.cloudConfig && appState.cloudConfig.gasAutoSync && appState.cloudConfig.gasUrl) {
+                    syncToGoogleAppsScript('PUSH', true);
+                }
+            } catch (e) {
+                console.error('Gagal menyimpan ke LocalStorage:', e);
+            }
+        }
+
+        // =========================================================================
+        // 2. FORMATTER & NOTIFIKASI TOAST
+        // =========================================================================
+        function formatRupiah(angka) {
+            const prefix = angka < 0 ? '-Rp ' : 'Rp ';
+            return prefix + Math.abs(Math.round(angka)).toLocaleString('id-ID');
+        }
+
+        function formatKg(kg) {
+            return Number(kg).toLocaleString('id-ID') + ' kg';
+        }
+
+        function formatTon(kg) {
+            return (kg / 1000).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Ton';
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const colors = {
+                success: 'bg-emerald-900 text-white border-emerald-700',
+                error: 'bg-rose-900 text-white border-rose-700',
+                info: 'bg-slate-900 text-white border-slate-700'
+            };
+            toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl border shadow-lg text-xs sm:text-sm font-medium transition-all duration-300 transform translate-y-2 opacity-0 ${colors[type] || colors.info}`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => toast.classList.remove('translate-y-2', 'opacity-0'));
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3200);
+        }
+
+        // =========================================================================
+        // 3. IDENTITAS TOKO & PENGATURAN LOGO
+        // =========================================================================
+        function renderStoreIdentity() {
+            const p = appState.storeProfile;
+            document.title = `${p.name} - ${p.tagline}`;
+            document.getElementById('header-store-name').textContent = p.name;
+            document.getElementById('header-store-tagline').textContent = p.tagline;
+            document.getElementById('header-store-address').textContent = p.address;
+            document.getElementById('header-store-phone').textContent = p.phone;
+            document.getElementById('footer-store-name').textContent = p.name;
+            document.getElementById('footer-store-address').textContent = `${p.address} • Telp: ${p.phone}`;
+
+            const logoBox = document.getElementById('header-logo-container');
+            if (p.logoBase64) {
+                logoBox.innerHTML = `<img src="${p.logoBase64}" alt="Logo ${p.name}" class="w-full h-full object-cover">`;
+            } else {
+                logoBox.innerHTML = DEFAULT_LOGO_SVG;
+            }
+        }
+
+        function openStoreSettingsModal() {
+            const p = appState.storeProfile;
+            document.getElementById('set-store-name').value = p.name;
+            document.getElementById('set-store-tagline').value = p.tagline;
+            document.getElementById('set-store-address').value = p.address;
+            document.getElementById('set-store-phone').value = p.phone;
+
+            const preview = document.getElementById('settings-logo-preview');
+            preview.innerHTML = p.logoBase64
+                ? `<img src="${p.logoBase64}" class="w-full h-full object-cover">`
+                : DEFAULT_LOGO_SVG;
+
+            document.getElementById('modal-store-settings').classList.remove('hidden');
+        }
+
+        function closeStoreSettingsModal() {
+            document.getElementById('modal-store-settings').classList.add('hidden');
+        }
+
+        function handleLogoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Resize gambar agar hemat memori LocalStorage & Cloud Sync
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const maxSize = 220;
+                    let w = img.width, h = img.height;
+                    if (w > h && w > maxSize) { h *= maxSize / w; w = maxSize; }
+                    else if (h > maxSize) { w *= maxSize / h; h = maxSize; }
+                    canvas.width = w;
+                    canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    const compressed = canvas.toDataURL('image/png', 0.85);
+                    appState.storeProfile.logoBase64 = compressed;
+                    document.getElementById('settings-logo-preview').innerHTML = `<img src="${compressed}" class="w-full h-full object-cover">`;
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resetLogoToDefault() {
+            appState.storeProfile.logoBase64 = '';
+            document.getElementById('set-logo-file').value = '';
+            document.getElementById('settings-logo-preview').innerHTML = DEFAULT_LOGO_SVG;
+            showToast('Logo dikembalikan ke emblem bawaan.', 'info');
+        }
+
+        document.getElementById('form-store-settings').addEventListener('submit', function(e) {
+            e.preventDefault();
+            appState.storeProfile.name = document.getElementById('set-store-name').value.trim();
+            appState.storeProfile.tagline = document.getElementById('set-store-tagline').value.trim();
+            appState.storeProfile.address = document.getElementById('set-store-address').value.trim();
+            appState.storeProfile.phone = document.getElementById('set-store-phone').value.trim();
+
+            saveState();
+            renderStoreIdentity();
+            closeStoreSettingsModal();
+            showToast('Identitas & Logo Toko berhasil diperbarui!', 'success');
+        });
+
+        // =========================================================================
+        // 4. PENGATURAN HARGA & KONTROL FORM JUAL / BELI (GABAH ATAU BERAS)
+        // =========================================================================
+        function openPriceSettingsModal() {
+            document.getElementById('set-price-beli-gabah').value = appState.prices.beliGabah;
+            document.getElementById('set-price-jual-gabah').value = appState.prices.jualGabah;
+            document.getElementById('set-price-beli-beras').value = appState.prices.beliBeras;
+            document.getElementById('set-price-jual-beras').value = appState.prices.jualBeras;
+            document.getElementById('modal-price-settings').classList.remove('hidden');
+        }
+
+        function closePriceSettingsModal() {
+            document.getElementById('modal-price-settings').classList.add('hidden');
+        }
+
+        document.getElementById('form-price-settings').addEventListener('submit', function(e) {
+            e.preventDefault();
+            appState.prices.beliGabah = parseFloat(document.getElementById('set-price-beli-gabah').value) || 6800;
+            appState.prices.jualGabah = parseFloat(document.getElementById('set-price-jual-gabah').value) || 7300;
+            appState.prices.beliBeras = parseFloat(document.getElementById('set-price-beli-beras').value) || 12200;
+            appState.prices.jualBeras = parseFloat(document.getElementById('set-price-jual-beras').value) || 13500;
+            appState.hargaJualBeras = appState.prices.jualBeras;
+
+            saveState();
+            updateTradeFormUI();
+            renderAll();
+            closePriceSettingsModal();
+            showToast('Daftar harga acuan Gabah & Beras berhasil ditetapkan!', 'success');
+        });
+
+        function setTradeMode(mode) {
+            currentTradeMode = mode;
+            updateTradeFormUI();
+        }
+
+        function setCommodity(comm) {
+            currentCommodity = comm;
+            updateTradeFormUI();
+        }
+
+        function updateTradeFormUI() {
+            const btnBeli = document.getElementById('btn-mode-beli');
+            const btnJual = document.getElementById('btn-mode-jual');
+            const btnGabah = document.getElementById('btn-comm-gabah');
+            const btnBeras = document.getElementById('btn-comm-beras');
+
+            if (currentTradeMode === 'BELI') {
+                btnBeli.className = 'py-3 px-4 rounded-xl border-2 border-amber-500 bg-amber-50 text-amber-900 font-extrabold text-sm flex items-center justify-center gap-2 transition cursor-pointer shadow-xs';
+                btnJual.className = 'py-3 px-4 rounded-xl border-2 border-slate-200 bg-white text-slate-600 hover:bg-slate-50 font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer';
+                document.getElementById('label-jb-pihak').textContent = 'Nama Petani / Pemasok';
+            } else {
+                btnJual.className = 'py-3 px-4 rounded-xl border-2 border-emerald-600 bg-emerald-50 text-emerald-900 font-extrabold text-sm flex items-center justify-center gap-2 transition cursor-pointer shadow-xs';
+                btnBeli.className = 'py-3 px-4 rounded-xl border-2 border-slate-200 bg-white text-slate-600 hover:bg-slate-50 font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer';
+                document.getElementById('label-jb-pihak').textContent = 'Nama Pembeli / Pelanggan';
+            }
+
+            if (currentCommodity === 'GABAH') {
+                btnGabah.className = 'py-3 px-4 rounded-xl border-2 border-padi-600 bg-padi-50 text-padi-900 font-extrabold text-sm flex items-center justify-center gap-2 transition cursor-pointer shadow-xs';
+                btnBeras.className = 'py-3 px-4 rounded-xl border-2 border-slate-200 bg-white text-slate-600 hover:bg-slate-50 font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer';
+                document.getElementById('label-input-berat').textContent = 'Berat Gabah (kg)';
+                document.getElementById('info-stok-tersedia').textContent = `Stok Gabah saat ini: ${formatKg(appState.stokGabahKg)}`;
+                document.getElementById('jb-harga').value = currentTradeMode === 'BELI' ? appState.prices.beliGabah : appState.prices.jualGabah;
+            } else {
+                btnBeras.className = 'py-3 px-4 rounded-xl border-2 border-padi-600 bg-padi-50 text-padi-900 font-extrabold text-sm flex items-center justify-center gap-2 transition cursor-pointer shadow-xs';
+                btnGabah.className = 'py-3 px-4 rounded-xl border-2 border-slate-200 bg-white text-slate-600 hover:bg-slate-50 font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer';
+                document.getElementById('label-input-berat').textContent = 'Berat Beras (kg)';
+                document.getElementById('info-stok-tersedia').textContent = `Stok Beras saat ini: ${formatKg(appState.stokBerasKg)}`;
+                document.getElementById('jb-harga').value = currentTradeMode === 'BELI' ? appState.prices.beliBeras : appState.prices.jualBeras;
+            }
+
+            const labelAksi = `${currentTradeMode === 'BELI' ? 'Beli' : 'Jual'} ${currentCommodity === 'GABAH' ? 'Gabah' : 'Beras'}`;
+            document.getElementById('summary-trx-label').textContent = `Total Transaksi ${labelAksi}`;
+            document.getElementById('btn-submit-jb').innerHTML = `<i data-lucide="check-circle-2" class="w-5 h-5"></i><span>Simpan Transaksi ${labelAksi}</span>`;
+            lucide.createIcons();
+            calculateTradeTotal();
+        }
+
+        function saveCurrentPriceAsDefault() {
+            const hargaBaru = parseFloat(document.getElementById('jb-harga').value);
+            if (!hargaBaru || hargaBaru <= 0) {
+                showToast('Masukkan nominal harga yang valid terlebih dahulu.', 'error');
+                return;
+            }
+            if (currentTradeMode === 'BELI' && currentCommodity === 'GABAH') appState.prices.beliGabah = hargaBaru;
+            if (currentTradeMode === 'JUAL' && currentCommodity === 'GABAH') appState.prices.jualGabah = hargaBaru;
+            if (currentTradeMode === 'BELI' && currentCommodity === 'BERAS') appState.prices.beliBeras = hargaBaru;
+            if (currentTradeMode === 'JUAL' && currentCommodity === 'BERAS') {
+                appState.prices.jualBeras = hargaBaru;
+                appState.hargaJualBeras = hargaBaru;
+            }
+            saveState();
+            renderAll();
+            showToast(`Harga ${formatRupiah(hargaBaru)}/kg ditetapkan sebagai harga default!`, 'success');
+        }
+
+        function calculateTradeTotal() {
+            const berat = parseFloat(document.getElementById('jb-berat').value) || 0;
+            const harga = parseFloat(document.getElementById('jb-harga').value) || 0;
+            const total = berat * harga;
+            document.getElementById('summary-trx-formula').textContent = `${formatKg(berat)} × ${formatRupiah(harga)} / kg`;
+            document.getElementById('jb-total-display').textContent = formatRupiah(total);
+        }
+
+        // Submit Form Transaksi Jual & Beli (Gabah atau Beras)
+        document.getElementById('form-jual-beli').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const berat = parseFloat(document.getElementById('jb-berat').value);
+            const harga = parseFloat(document.getElementById('jb-harga').value);
+            const pihak = document.getElementById('jb-pihak').value.trim() || (currentTradeMode === 'BELI' ? 'Petani Umum' : 'Pelanggan Umum');
+            const metode = document.getElementById('jb-metode').value;
+            const tanggal = document.getElementById('jb-tanggal').value;
+            const catatan = document.getElementById('jb-catatan').value.trim();
+            const autoPrint = document.getElementById('jb-auto-print').checked;
+
+            if (!berat || berat <= 0 || !harga || harga <= 0) {
+                showToast('Masukkan berat (kg) dan harga per kg dengan benar.', 'error');
+                return;
+            }
+
+            const total = berat * harga;
+            const isBeli = currentTradeMode === 'BELI';
+            const isGabah = currentCommodity === 'GABAH';
+
+            // Validasi Stok & Saldo Kas
+            if (isBeli && metode === 'TUNAI' && total > appState.modalUangTersisa) {
+                showToast('Modal uang tersisa tidak cukup! Gunakan metode Tempo atau tambah modal.', 'error');
+                return;
+            }
+            if (!isBeli && isGabah && berat > appState.stokGabahKg) {
+                showToast(`Stok Gabah tidak mencukupi! Sisa: ${formatKg(appState.stokGabahKg)}`, 'error');
+                return;
+            }
+            if (!isBeli && !isGabah && berat > appState.stokBerasKg) {
+                showToast(`Stok Beras tidak mencukupi! Sisa: ${formatKg(appState.stokBerasKg)}`, 'error');
+                return;
+            }
+
+            // Update Stok Gabah / Beras
+            if (isBeli && isGabah) {
+                const nilaiLama = appState.stokGabahKg * appState.hargaRataGabah;
+                appState.stokGabahKg += berat;
+                appState.hargaRataGabah = Math.round((nilaiLama + total) / appState.stokGabahKg);
+            } else if (!isBeli && isGabah) {
+                appState.stokGabahKg -= berat;
+            } else if (isBeli && !isGabah) {
+                appState.stokBerasKg += berat;
+            } else if (!isBeli && !isGabah) {
+                appState.stokBerasKg -= berat;
+            }
+
+            // Update Kas atau Utang/Piutang
+            let arusKas = 0;
+            const tempoDate = new Date(tanggal);
+            tempoDate.setDate(tempoDate.getDate() + 14);
+            const tempoStr = tempoDate.toISOString().split('T')[0];
+
+            if (isBeli) {
+                if (metode === 'TUNAI') {
+                    appState.modalUangTersisa -= total;
+                    arusKas = -total;
+                } else {
+                    appState.utangList.unshift({
+                        id: 'UTG-' + Date.now().toString().slice(-4),
+                        pihak,
+                        nominal: total,
+                        tanggal,
+                        jatuhTempo: tempoStr,
+                        keterangan: `Beli ${formatKg(berat)} ${isGabah ? 'Gabah' : 'Beras'} @ ${formatRupiah(harga)}/kg`,
+                        status: 'BELUM_LUNAS'
+                    });
+                }
+            } else {
+                if (metode === 'TUNAI') {
+                    appState.modalUangTersisa += total;
+                    arusKas = total;
+                } else {
+                    appState.piutangList.unshift({
+                        id: 'PTG-' + Date.now().toString().slice(-4),
+                        pihak,
+                        nominal: total,
+                        tanggal,
+                        jatuhTempo: tempoStr,
+                        keterangan: `Jual ${formatKg(berat)} ${isGabah ? 'Gabah' : 'Beras'} @ ${formatRupiah(harga)}/kg`,
+                        status: 'BELUM_LUNAS'
+                    });
+                }
+            }
+
+            const trxId = 'TRX-' + Date.now().toString().slice(-5);
+            const namaKomoditas = isGabah ? 'Gabah' : 'Beras';
+            const judulTrx = `${isBeli ? 'Beli' : 'Jual'} ${namaKomoditas} (${metode === 'TUNAI' ? 'Tunai' : 'Tempo'})`;
+
+            appState.transaksiList.unshift({
+                id: trxId,
+                tanggal,
+                jenis: `${currentTradeMode}_${currentCommodity}`,
+                judul: judulTrx,
+                pihak,
+                komoditas: currentCommodity,
+                arah: currentTradeMode,
+                beratKg: berat,
+                hargaPerKg: harga,
+                mutasiStok: `${isBeli ? '+' : '-'}${formatKg(berat)} ${namaKomoditas}`,
+                nominal: total,
+                arusKas,
+                catatan: catatan || `${formatKg(berat)} × ${formatRupiah(harga)}/kg`
+            });
+
+            saveState();
+            renderAll();
+            document.getElementById('jb-berat').value = '';
+            document.getElementById('jb-pihak').value = '';
+            document.getElementById('jb-catatan').value = '';
+            updateTradeFormUI();
+            showToast(`Transaksi ${judulTrx} sebesar ${formatRupiah(total)} berhasil disimpan!`, 'success');
+
+            if (autoPrint) {
+                printTransaksiReceipt(trxId);
+            }
+        });
+
+        // =========================================================================
+        // 5. KALKULASI KEUANGAN REALTIME & GRAFIK KHUSUS
+        // =========================================================================
+        function calculateFinancialMetrics() {
+            const nilaiStokGabah = appState.stokGabahKg * appState.prices.beliGabah;
+            const nilaiStokBeras = appState.stokBerasKg * appState.prices.jualBeras;
+            const totalNilaiStok = nilaiStokGabah + nilaiStokBeras;
+
+            const totalModalDisetor = appState.riwayatModal.reduce((acc, item) => {
+                return item.jenis === 'TAMBAH' ? acc + item.nominal : acc - item.nominal;
+            }, 0);
+
+            const modalBeredar = appState.modalUangTersisa + totalNilaiStok;
+
+            const piutangAktif = appState.piutangList.filter(p => p.status === 'BELUM_LUNAS');
+            const utangAktif = appState.utangList.filter(u => u.status === 'BELUM_LUNAS');
+
+            const totalPiutang = piutangAktif.reduce((sum, item) => sum + item.nominal, 0);
+            const totalUtang = utangAktif.reduce((sum, item) => sum + item.nominal, 0);
+
+            const selisihPiutangUtang = totalPiutang - totalUtang;
+            const saldoBersihAkhir = selisihPiutangUtang + modalBeredar;
+
+            let statusInfo = {
+                label: 'SANGAT SEHAT (SURPLUS)',
+                badgeClass: 'bg-emerald-100 text-emerald-800 border border-emerald-300',
+                cardBorder: 'border-emerald-300',
+                desc: 'Likuiditas & stok sangat kuat; piutang + modal beredar melampaui kewajiban utang.'
+            };
+
+            if (saldoBersihAkhir < 0 || (appState.modalUangTersisa < 0 && selisihPiutangUtang < 0)) {
+                statusInfo = {
+                    label: 'KRITIS / DEFISIT',
+                    badgeClass: 'bg-rose-100 text-rose-800 border border-rose-300',
+                    cardBorder: 'border-rose-400',
+                    desc: 'Utang melebihi gabungan modal beredar & piutang. Segera tagih piutang!'
+                };
+            } else if (appState.modalUangTersisa < 15000000 || saldoBersihAkhir < totalModalDisetor * 0.5) {
+                statusInfo = {
+                    label: 'WASPADA (KAS KETAT)',
+                    badgeClass: 'bg-amber-100 text-amber-800 border border-amber-300',
+                    cardBorder: 'border-amber-300',
+                    desc: 'Modal uang tunai menipis atau banyak tertahan di piutang/stok.'
+                };
+            } else if (saldoBersihAkhir < totalModalDisetor * 1.1) {
+                statusInfo = {
+                    label: 'SEHAT / AMAN',
+                    badgeClass: 'bg-blue-100 text-blue-800 border border-blue-300',
+                    cardBorder: 'border-blue-300',
+                    desc: 'Arus kas terkendali, kewajiban utang tertutup oleh aset & piutang.'
+                };
+            }
+
+            return {
+                nilaiStokGabah,
+                nilaiStokBeras,
+                totalNilaiStok,
+                totalModalDisetor,
+                modalBeredar,
+                piutangAktif,
+                utangAktif,
+                totalPiutang,
+                totalUtang,
+                selisihPiutangUtang,
+                saldoBersihAkhir,
+                statusInfo
+            };
+        }
+
+        function renderAll() {
+            const m = calculateFinancialMetrics();
+
+            // 1. Kartu Indikator Realtime Atas
+            document.getElementById('card-stok-gabah-kg').textContent = formatKg(appState.stokGabahKg);
+            document.getElementById('card-stok-gabah-ton').textContent = `${formatTon(appState.stokGabahKg)} • Nilai: ${formatRupiah(m.nilaiStokGabah)}`;
+            document.getElementById('card-harga-gabah').textContent = `${formatRupiah(appState.prices.beliGabah)} / ${formatRupiah(appState.prices.jualGabah)}`;
+
+            document.getElementById('card-stok-beras-kg').textContent = formatKg(appState.stokBerasKg);
+            document.getElementById('card-stok-beras-ton').textContent = `${formatTon(appState.stokBerasKg)} • Nilai: ${formatRupiah(m.nilaiStokBeras)}`;
+            document.getElementById('card-harga-beras').textContent = `${formatRupiah(appState.prices.beliBeras)} / ${formatRupiah(appState.prices.jualBeras)}`;
+
+            document.getElementById('card-modal-uang').textContent = formatRupiah(appState.modalUangTersisa);
+            document.getElementById('card-total-modal-disetor').textContent = `Modal Disetor: ${formatRupiah(m.totalModalDisetor)}`;
+            document.getElementById('card-modal-beredar').textContent = formatRupiah(m.modalBeredar);
+
+            // Kartu Status Keuangan
+            document.getElementById('card-status-container').className = `bg-white rounded-2xl p-4 sm:p-5 border-2 ${m.statusInfo.cardBorder} shadow-xs hover:shadow-md transition flex flex-col justify-between`;
+            const statusBadge = document.getElementById('status-badge');
+            statusBadge.className = `inline-block px-2.5 py-1 rounded-lg text-xs font-extrabold mb-1 ${m.statusInfo.badgeClass}`;
+            statusBadge.textContent = m.statusInfo.label;
+            document.getElementById('status-saldo-bersih').textContent = `Saldo Akhir: ${formatRupiah(m.saldoBersihAkhir)}`;
+            document.getElementById('status-formula-desc').textContent = m.statusInfo.desc;
+
+            // Update Tampilan Daftar Harga di Dashboard Utama
+            document.getElementById('disp-harga-beli-gabah').textContent = formatRupiah(appState.prices.beliGabah);
+            document.getElementById('disp-harga-jual-gabah').textContent = formatRupiah(appState.prices.jualGabah);
+            document.getElementById('disp-harga-beli-beras').textContent = formatRupiah(appState.prices.beliBeras);
+            document.getElementById('disp-harga-jual-beras').textContent = formatRupiah(appState.prices.jualBeras);
+            document.getElementById('dash-total-piutang').textContent = formatRupiah(m.totalPiutang);
+            document.getElementById('dash-total-utang').textContent = formatRupiah(m.totalUtang);
+
+            // Update Angka di View Khusus Grafik
+            document.getElementById('summary-total-piutang').textContent = formatRupiah(m.totalPiutang);
+            document.getElementById('count-piutang-aktif').textContent = `${m.piutangAktif.length} tagihan aktif`;
+            document.getElementById('summary-total-utang').textContent = formatRupiah(m.totalUtang);
+            document.getElementById('count-utang-aktif').textContent = `${m.utangAktif.length} utang aktif`;
+
+            const badgeSelisih = document.getElementById('badge-selisih-up');
+            badgeSelisih.textContent = `Selisih (P - U): ${formatRupiah(m.selisihPiutangUtang)}`;
+            badgeSelisih.className = m.selisihPiutangUtang >= 0
+                ? 'text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800'
+                : 'text-xs font-bold px-2.5 py-1 rounded-lg bg-rose-100 text-rose-800';
+
+            document.getElementById('comp-uang-tersisa').textContent = formatRupiah(appState.modalUangTersisa);
+            document.getElementById('comp-nilai-stok').textContent = formatRupiah(m.totalNilaiStok);
+            document.getElementById('comp-selisih-pu').textContent = formatRupiah(m.selisihPiutangUtang);
+            document.getElementById('comp-total-bersih').textContent = formatRupiah(m.saldoBersihAkhir);
+
+            renderCharts(m);
+            renderMiniUtangPiutang();
+            renderRiwayatModal();
+            renderTransaksiTable();
+            lucide.createIcons();
+        }
+
+        function renderCharts(m) {
+            const ctxUP = document.getElementById('chartUtangPiutang').getContext('2d');
+            const ctxGab = document.getElementById('chartGabunganModal').getContext('2d');
+
+            if (chartUtangPiutangInstance) chartUtangPiutangInstance.destroy();
+            if (chartGabunganInstance) chartGabunganInstance.destroy();
+
+            chartUtangPiutangInstance = new Chart(ctxUP, {
+                type: 'bar',
+                data: {
+                    labels: ['Piutang Pelanggan', 'Utang Usaha', 'Selisih (P - U)'],
+                    datasets: [{
+                        label: 'Nominal (Rp)',
+                        data: [m.totalPiutang, m.totalUtang, m.selisihPiutangUtang],
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.85)',
+                            'rgba(244, 63, 94, 0.85)',
+                            m.selisihPiutangUtang >= 0 ? 'rgba(59, 130, 246, 0.85)' : 'rgba(245, 158, 11, 0.85)'
+                        ],
+                        borderRadius: 10,
+                        barPercentage: 0.55
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: (ctx) => ' ' + formatRupiah(ctx.parsed.y) } }
+                    },
+                    scales: {
+                        y: {
+                            grid: { color: '#f1f5f9' },
+                            ticks: { font: { size: 11 }, callback: (v) => 'Rp ' + (v / 1000000).toFixed(0) + ' Jt' }
+                        },
+                        x: { grid: { display: false }, ticks: { font: { size: 11, weight: '600' } } }
+                    }
+                }
+            });
+
+            chartGabunganInstance = new Chart(ctxGab, {
+                type: 'bar',
+                data: {
+                    labels: ['Uang Tersisa', 'Nilai Stok', 'Modal Beredar', 'Selisih (P-U)', 'Saldo Bersih'],
+                    datasets: [
+                        {
+                            type: 'bar',
+                            label: 'Komponen Keuangan (Rp)',
+                            data: [appState.modalUangTersisa, m.totalNilaiStok, m.modalBeredar, m.selisihPiutangUtang, m.saldoBersihAkhir],
+                            backgroundColor: [
+                                'rgba(37, 99, 235, 0.82)',
+                                'rgba(217, 119, 6, 0.82)',
+                                'rgba(13, 148, 136, 0.85)',
+                                m.selisihPiutangUtang >= 0 ? 'rgba(16, 185, 129, 0.85)' : 'rgba(244, 63, 94, 0.85)',
+                                'rgba(79, 70, 229, 0.92)'
+                            ],
+                            borderRadius: 9,
+                            barPercentage: 0.55
+                        },
+                        {
+                            type: 'line',
+                            label: 'Acuan Modal Disetor',
+                            data: Array(5).fill(m.totalModalDisetor),
+                            borderColor: 'rgb(100, 116, 139)',
+                            borderDash: [6, 6],
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+                        tooltip: { callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${formatRupiah(ctx.parsed.y)}` } }
+                    },
+                    scales: {
+                        y: {
+                            grid: { color: '#f1f5f9' },
+                            ticks: { font: { size: 11 }, callback: (v) => 'Rp ' + (v / 1000000).toFixed(0) + ' Jt' }
+                        },
+                        x: { grid: { display: false }, ticks: { font: { size: 10, weight: '600' } } }
+                    }
+                }
+            });
+        }
+
+        // =========================================================================
+        // 6. NAVIGASI TAB UTAMA, TAB MINI UTANG/PIUTANG, MODAL & GILING PADI
+        // =========================================================================
+        function switchMainView(viewId) {
+            ['view-dashboard', 'view-grafik', 'view-modal-giling'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(viewId).classList.remove('hidden');
+
+            const navIds = ['nav-view-dashboard', 'nav-view-grafik', 'nav-view-modal-giling'];
+            navIds.forEach(nid => {
+                document.getElementById(nid).className = 'px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition inline-flex items-center gap-2 shrink-0 cursor-pointer';
+            });
+
+            if (viewId === 'view-dashboard') {
+                document.getElementById('nav-view-dashboard').className = 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-padi-600 text-white shadow-sm transition inline-flex items-center gap-2 shrink-0 cursor-pointer';
+            } else if (viewId === 'view-grafik') {
+                document.getElementById('nav-view-grafik').className = 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600 text-white shadow-sm transition inline-flex items-center gap-2 shrink-0 cursor-pointer';
+                renderCharts(calculateFinancialMetrics());
+            } else {
+                document.getElementById('nav-view-modal-giling').className = 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 text-white shadow-sm transition inline-flex items-center gap-2 shrink-0 cursor-pointer';
+            }
+        }
+
+        function switchMiniUP(mode) {
+            document.getElementById('mini-list-piutang').classList.add('hidden');
+            document.getElementById('mini-list-utang').classList.add('hidden');
+            document.getElementById('form-utang-piutang').classList.add('hidden');
+
+            document.getElementById('mini-tab-piutang').className = 'px-3 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 cursor-pointer';
+            document.getElementById('mini-tab-utang').className = 'px-3 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 cursor-pointer';
+            document.getElementById('mini-tab-tambah-up').className = 'px-3 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 cursor-pointer';
+
+            if (mode === 'PIUTANG') {
+                document.getElementById('mini-list-piutang').classList.remove('hidden');
+                document.getElementById('mini-tab-piutang').className = 'px-3 py-1 rounded-lg text-xs font-bold bg-emerald-600 text-white cursor-pointer';
+            } else if (mode === 'UTANG') {
+                document.getElementById('mini-list-utang').classList.remove('hidden');
+                document.getElementById('mini-tab-utang').className = 'px-3 py-1 rounded-lg text-xs font-bold bg-rose-600 text-white cursor-pointer';
+            } else {
+                document.getElementById('form-utang-piutang').classList.remove('hidden');
+                document.getElementById('mini-tab-tambah-up').className = 'px-3 py-1 rounded-lg text-xs font-bold bg-indigo-600 text-white cursor-pointer';
+            }
+        }
+
+        function renderMiniUtangPiutang() {
+            const piutangAktif = appState.piutangList.filter(p => p.status === 'BELUM_LUNAS');
+            const utangAktif = appState.utangList.filter(u => u.status === 'BELUM_LUNAS');
+
+            const elPiutang = document.getElementById('mini-list-piutang');
+            elPiutang.innerHTML = piutangAktif.length === 0
+                ? `<p class="text-xs text-slate-400 text-center py-4">Tidak ada piutang aktif.</p>`
+                : piutangAktif.map(p => `
+                    <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
+                        <div>
+                            <p class="text-xs font-bold text-slate-900">${p.pihak}</p>
+                            <p class="text-[11px] font-extrabold text-emerald-700">${formatRupiah(p.nominal)} <span class="font-normal text-slate-400">• Tempo ${p.jatuhTempo}</span></p>
+                        </div>
+                        <button onclick="lunasiUtangPiutang('PIUTANG', '${p.id}')" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold cursor-pointer">Lunasi</button>
+                    </div>
+                `).join('');
+
+            const elUtang = document.getElementById('mini-list-utang');
+            elUtang.innerHTML = utangAktif.length === 0
+                ? `<p class="text-xs text-slate-400 text-center py-4">Tidak ada utang aktif.</p>`
+                : utangAktif.map(u => `
+                    <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
+                        <div>
+                            <p class="text-xs font-bold text-slate-900">${u.pihak}</p>
+                            <p class="text-[11px] font-extrabold text-rose-700">${formatRupiah(u.nominal)} <span class="font-normal text-slate-400">• Tempo ${u.jatuhTempo}</span></p>
+                        </div>
+                        <button onclick="lunasiUtangPiutang('UTANG', '${u.id}')" class="px-2.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold cursor-pointer">Bayar</button>
+                    </div>
+                `).join('');
+        }
+
+        document.getElementById('form-utang-piutang').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const tipe = document.getElementById('up-tipe').value;
+            const pihak = document.getElementById('up-pihak').value.trim();
+            const nominal = parseFloat(document.getElementById('up-nominal').value);
+            const jatuhTempo = document.getElementById('up-tempo').value;
+            const keterangan = document.getElementById('up-keterangan').value.trim();
+            const today = new Date().toISOString().split('T')[0];
+
+            if (!pihak || !nominal || nominal <= 0) return;
+
+            if (tipe === 'PIUTANG') {
+                appState.piutangList.unshift({ id: 'PTG-' + Date.now().toString().slice(-4), pihak, nominal, tanggal: today, jatuhTempo, keterangan, status: 'BELUM_LUNAS' });
+                switchMiniUP('PIUTANG');
+            } else {
+                appState.utangList.unshift({ id: 'UTG-' + Date.now().toString().slice(-4), pihak, nominal, tanggal: today, jatuhTempo, keterangan, status: 'BELUM_LUNAS' });
+                switchMiniUP('UTANG');
+            }
+            saveState();
+            renderAll();
+            this.reset();
+            setDefaultDates();
+            showToast('Catatan Utang/Piutang berhasil disimpan!', 'success');
+        });
+
+        function lunasiUtangPiutang(tipe, id) {
+            const today = new Date().toISOString().split('T')[0];
+            if (tipe === 'PIUTANG') {
+                const item = appState.piutangList.find(p => p.id === id);
+                if (!item) return;
+                item.status = 'LUNAS';
+                appState.modalUangTersisa += item.nominal;
+                appState.transaksiList.unshift({
+                    id: 'TRX-' + Date.now().toString().slice(-5),
+                    tanggal: today,
+                    jenis: 'PELUNASAN',
+                    judul: 'Pelunasan Piutang',
+                    pihak: item.pihak,
+                    mutasiStok: '-',
+                    nominal: item.nominal,
+                    arusKas: item.nominal,
+                    catatan: `Pelunasan tagihan (${item.id}): ${item.keterangan}`
+                });
+                showToast(`Piutang ${item.pihak} (${formatRupiah(item.nominal)}) LUNAS!`, 'success');
+            } else {
+                const item = appState.utangList.find(u => u.id === id);
+                if (!item) return;
+                if (item.nominal > appState.modalUangTersisa) {
+                    showToast('Modal uang tersisa tidak cukup untuk melunasi utang ini.', 'error');
+                    return;
+                }
+                item.status = 'LUNAS';
+                appState.modalUangTersisa -= item.nominal;
+                appState.transaksiList.unshift({
+                    id: 'TRX-' + Date.now().toString().slice(-5),
+                    tanggal: today,
+                    jenis: 'PELUNASAN',
+                    judul: 'Pembayaran Utang',
+                    pihak: item.pihak,
+                    mutasiStok: '-',
+                    nominal: item.nominal,
+                    arusKas: -item.nominal,
+                    catatan: `Pelunasan utang (${item.id}): ${item.keterangan}`
+                });
+                showToast(`Utang ke ${item.pihak} (${formatRupiah(item.nominal)}) DILUNASI!`, 'success');
+            }
+            saveState();
+            renderAll();
+        }
+
+        // Form Input Modal + Keterangan
+        document.getElementById('form-modal').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const jenis = document.getElementById('modal-jenis').value;
+            const tanggal = document.getElementById('modal-tanggal').value;
+            const nominal = parseFloat(document.getElementById('modal-nominal').value);
+            const keterangan = document.getElementById('modal-keterangan').value.trim();
+
+            if (!nominal || nominal <= 0 || !keterangan) return;
+            if (jenis === 'TARIK' && nominal > appState.modalUangTersisa) {
+                showToast('Modal uang tersisa tidak mencukupi.', 'error');
+                return;
+            }
+
+            appState.riwayatModal.unshift({
+                id: 'MOD-' + Date.now().toString().slice(-5),
+                tanggal,
+                jenis,
+                nominal,
+                keterangan
+            });
+            appState.modalUangTersisa += (jenis === 'TAMBAH' ? nominal : -nominal);
+
+            saveState();
+            renderAll();
+            this.reset();
+            setDefaultDates();
+            showToast('Mutasi modal berhasil dicatat!', 'success');
+        });
+
+        function renderRiwayatModal() {
+            const container = document.getElementById('list-riwayat-modal');
+            document.getElementById('badge-count-modal').textContent = `${appState.riwayatModal.length} catatan`;
+            container.innerHTML = appState.riwayatModal.map(item => {
+                const isTambah = item.jenis === 'TAMBAH';
+                return `
+                    <div class="p-3 rounded-xl border ${isTambah ? 'bg-blue-50/40 border-blue-100' : 'bg-amber-50/40 border-amber-100'}">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${isTambah ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'}">
+                                ${isTambah ? '+ MODAL MASUK' : '- TARIK MODAL'}
+                            </span>
+                            <span class="text-[11px] text-slate-400">${item.tanggal}</span>
+                        </div>
+                        <p class="text-xs font-extrabold text-slate-900 mt-1">${formatRupiah(item.nominal)}</p>
+                        <p class="text-[11px] text-slate-600">${item.keterangan}</p>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Form Proses Giling Padi
+        function calcGilingPreview() {
+            const gabah = parseFloat(document.getElementById('giling-gabah-kg').value) || 0;
+            const beras = parseFloat(document.getElementById('giling-beras-kg').value) || 0;
+            const rendemen = gabah > 0 ? ((beras / gabah) * 100).toFixed(1) : 0;
+            document.getElementById('giling-rendemen-info').textContent = `Rendemen Giling: ${rendemen}% (Standar 62% - 65%)`;
+        }
+
+        document.getElementById('form-giling-padi').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const tanggal = document.getElementById('giling-tanggal').value;
+            const gabahKg = parseFloat(document.getElementById('giling-gabah-kg').value);
+            const berasKg = parseFloat(document.getElementById('giling-beras-kg').value);
+            const biaya = parseFloat(document.getElementById('giling-biaya').value) || 0;
+            const catatan = document.getElementById('giling-catatan').value.trim();
+
+            if (gabahKg > appState.stokGabahKg) {
+                showToast(`Stok gabah tidak cukup! Sisa: ${formatKg(appState.stokGabahKg)}`, 'error');
+                return;
+            }
+            if (biaya > appState.modalUangTersisa) {
+                showToast('Modal uang tersisa tidak cukup untuk biaya giling.', 'error');
+                return;
+            }
+
+            appState.stokGabahKg -= gabahKg;
+            appState.stokBerasKg += berasKg;
+            appState.modalUangTersisa -= biaya;
+
+            const rendemen = ((berasKg / gabahKg) * 100).toFixed(1);
+            appState.transaksiList.unshift({
+                id: 'TRX-' + Date.now().toString().slice(-5),
+                tanggal,
+                jenis: 'GILING_GABAH',
+                judul: 'Proses Giling Gabah',
+                pihak: 'Internal Penggilingan',
+                mutasiStok: `-${formatKg(gabahKg)} Gabah → +${formatKg(berasKg)} Beras`,
+                nominal: biaya,
+                arusKas: -biaya,
+                catatan: catatan || `Rendemen ${rendemen}% • Biaya giling ${formatRupiah(biaya)}`
+            });
+
+            saveState();
+            renderAll();
+            this.reset();
+            setDefaultDates();
+            showToast(`Giling selesai! Stok beras bertambah +${formatKg(berasKg)}.`, 'success');
+        });
+
+        // Render Tabel Riwayat Transaksi
+        function renderTransaksiTable() {
+            const filter = document.getElementById('filter-trx-jenis').value;
+            const tbody = document.getElementById('tbody-transaksi');
+            const list = appState.transaksiList.filter(t => {
+                if (filter === 'ALL') return true;
+                if (filter === 'BELI') return t.jenis.startsWith('BELI');
+                if (filter === 'JUAL') return t.jenis.startsWith('JUAL');
+                return t.jenis === filter;
+            });
+
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-xs text-slate-400">Belum ada transaksi pada kategori ini.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = list.map(trx => {
+                let badgeColor = 'bg-slate-100 text-slate-700';
+                if (trx.jenis.startsWith('BELI')) badgeColor = 'bg-amber-100 text-amber-800';
+                if (trx.jenis.startsWith('JUAL')) badgeColor = 'bg-emerald-100 text-emerald-800';
+                if (trx.jenis === 'GILING_GABAH') badgeColor = 'bg-indigo-100 text-indigo-800';
+                if (trx.jenis === 'PELUNASAN') badgeColor = 'bg-blue-100 text-blue-800';
+
+                const volInfo = trx.beratKg && trx.hargaPerKg
+                    ? `${formatKg(trx.beratKg)} × ${formatRupiah(trx.hargaPerKg)}`
+                    : trx.mutasiStok;
+
+                return `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-3 px-3 whitespace-nowrap">
+                            <div class="font-mono text-xs font-bold text-slate-800">${trx.id}</div>
+                            <div class="text-[11px] text-slate-400">${trx.tanggal}</div>
+                        </td>
+                        <td class="py-3 px-3 whitespace-nowrap">
+                            <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold ${badgeColor}">${trx.judul}</span>
+                        </td>
+                        <td class="py-3 px-3">
+                            <div class="font-bold text-slate-900 text-xs">${trx.pihak}</div>
+                            <div class="text-[11px] text-slate-500">${trx.catatan || '-'}</div>
+                        </td>
+                        <td class="py-3 px-3 text-xs font-medium text-slate-700 whitespace-nowrap">${volInfo}</td>
+                        <td class="py-3 px-3 text-xs sm:text-sm font-extrabold text-slate-900 whitespace-nowrap">${formatRupiah(trx.nominal)}</td>
+                        <td class="py-3 px-3 text-right whitespace-nowrap">
+                            <button onclick="printTransaksiReceipt('${trx.id}')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-700 text-white text-xs font-semibold transition cursor-pointer" title="Cetak Struk Thermal">
+                                <i data-lucide="printer" class="w-3.5 h-3.5 text-emerald-400"></i>
+                                <span>Struk</span>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        // =========================================================================
+        // 7. PRINTER THERMAL (58mm/80mm) — HANYA NOMINAL TRANSAKSI (TANPA SISA STOK)
+        // =========================================================================
+        function buildReceiptHeader(divider) {
+            const p = appState.storeProfile;
+            const now = new Date().toLocaleString('id-ID');
+            const logoHtml = p.logoBase64
+                ? `<img src="${p.logoBase64}" class="w-10 h-10 mx-auto mb-1 object-contain grayscale">`
+                : '';
+
+            return `
+                ${logoHtml}
+                <div class="text-center font-bold uppercase text-sm">${p.name}</div>
+                <div class="text-center text-[10px] font-bold">${p.tagline}</div>
+                <div class="text-center text-[10px]">${p.address}</div>
+                <div class="text-center text-[10px]">Telp: ${p.phone}</div>
+                <div>${divider}</div>
+                <div class="text-[10px]">Cetak : ${now}</div>
+                <div>${divider}</div>
+            `;
+        }
+
+        function printTransaksiReceipt(trxId) {
+            const trx = appState.transaksiList.find(t => t.id === trxId);
+            if (!trx) return;
+            const p = appState.storeProfile;
+            const divider = currentThermalWidth === '58' ? '--------------------------------' : '------------------------------------------';
+
+            // HANYA menampilkan rincian & nominal transaksi (TIDAK mencantumkan sisa stok)
+            const rincianVolumeHtml = (trx.beratKg && trx.hargaPerKg)
+                ? `
+                    <div class="flex justify-between"><span>Komoditas:</span><span class="font-bold">${trx.komoditas || '-'}</span></div>
+                    <div class="flex justify-between"><span>Berat:</span><span>${formatKg(trx.beratKg)}</span></div>
+                    <div class="flex justify-between"><span>Harga/kg:</span><span>${formatRupiah(trx.hargaPerKg)}</span></div>
+                  `
+                : `<div class="flex justify-between"><span>Rincian:</span><span>${trx.mutasiStok}</span></div>`;
+
+            const html = `
+                ${buildReceiptHeader(divider)}
+                <div class="font-bold text-center my-1">NOTA TRANSAKSI</div>
+                <div>No. Nota : ${trx.id}</div>
+                <div>Tanggal  : ${trx.tanggal}</div>
+                <div>Jenis    : ${trx.judul}</div>
+                <div>Pihak    : ${trx.pihak}</div>
+                <div>${divider}</div>
+                ${rincianVolumeHtml}
+                <div>${divider}</div>
+                <div class="flex justify-between font-bold text-sm my-1">
+                    <span>TOTAL NOMINAL:</span>
+                    <span>${formatRupiah(trx.nominal)}</span>
+                </div>
+                <div class="text-[10px]">Ket: ${trx.catatan || '-'}</div>
+                <div>${divider}</div>
+                <div class="text-center text-[10px] mt-1">Terima Kasih Atas Kunjungan Anda</div>
+                <div class="text-center text-[10px] font-bold">${p.name}</div>
+            `;
+
+            currentReceiptRawText =
+`${p.name.toUpperCase()}
+${p.tagline}
+${p.address} - Telp: ${p.phone}
+${divider}
+No. Nota : ${trx.id}
+Tanggal  : ${trx.tanggal}
+Jenis    : ${trx.judul}
+Pihak    : ${trx.pihak}
+${trx.beratKg ? `Berat    : ${formatKg(trx.beratKg)}\nHarga/kg : ${formatRupiah(trx.hargaPerKg)}\n` : ''}${divider}
+TOTAL    : ${formatRupiah(trx.nominal)}
+Ket      : ${trx.catatan || '-'}
+${divider}
+Terima Kasih\n\n\n`;
+
+            document.getElementById('printable-receipt-area').innerHTML = html;
+            document.getElementById('modal-thermal').classList.remove('hidden');
+        }
+
+        function setThermalWidth(size) {
+            currentThermalWidth = size;
+            const area = document.getElementById('printable-receipt-area');
+            const btn58 = document.getElementById('btn-size-58');
+            const btn80 = document.getElementById('btn-size-80');
+
+            if (size === '58') {
+                area.classList.remove('thermal-80mm', 'print-width-80');
+                area.classList.add('thermal-58mm', 'print-width-58');
+                btn58.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white cursor-pointer';
+                btn80.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-700 border border-slate-300 cursor-pointer';
+            } else {
+                area.classList.remove('thermal-58mm', 'print-width-58');
+                area.classList.add('thermal-80mm', 'print-width-80');
+                btn80.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white cursor-pointer';
+                btn58.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-700 border border-slate-300 cursor-pointer';
+            }
+        }
+
+        function closeThermalModal() {
+            document.getElementById('modal-thermal').classList.add('hidden');
+        }
+
+        function triggerSystemPrint() {
+            window.print();
+        }
+
+        async function printViaWebBluetooth() {
+            if (!navigator.bluetooth) {
+                showToast('Browser tidak mendukung Web Bluetooth. Gunakan tombol Cetak Struk.', 'info');
+                return;
+            }
+            try {
+                showToast('Menghubungkan ke printer thermal Bluetooth...', 'info');
+                const device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
+                });
+                const server = await device.gatt.connect();
+                const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
+                const characteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
+
+                const encoder = new TextEncoder();
+                await characteristic.writeValue(new Uint8Array([0x1B, 0x40]));
+                const textData = encoder.encode(currentReceiptRawText);
+                for (let i = 0; i < textData.length; i += 100) {
+                    await characteristic.writeValue(textData.slice(i, i + 100));
+                }
+                showToast('Struk berhasil dicetak via Bluetooth!', 'success');
+            } catch (err) {
+                showToast('Koneksi Bluetooth dibatalkan atau gunakan Cetak Struk browser.', 'info');
+            }
+        }
+
+        // =========================================================================
+        // 8. KONEKSI CLOUD (GOOGLE APPS SCRIPT, GITHUB GIST) & LINK AKSES ONLINE
+        // =========================================================================
+        function openCloudModal() {
+            document.getElementById('cloud-gas-url').value = appState.cloudConfig.gasUrl || '';
+            document.getElementById('cloud-gas-autosync').checked = !!appState.cloudConfig.gasAutoSync;
+            document.getElementById('cloud-gh-token').value = appState.cloudConfig.ghToken || '';
+            document.getElementById('cloud-gh-gistid').value = appState.cloudConfig.ghGistId || '';
+            document.getElementById('modal-cloud').classList.remove('hidden');
+        }
+
+        function closeCloudModal() {
+            document.getElementById('modal-cloud').classList.add('hidden');
+        }
+
+        function switchCloudTab(panelId) {
+            ['panel-appscript', 'panel-github', 'panel-sharelink'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(panelId).classList.remove('hidden');
+
+            ['ctab-appscript', 'ctab-github', 'ctab-link'].forEach(id => {
+                document.getElementById(id).className = 'px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 cursor-pointer';
+            });
+            if (panelId === 'panel-appscript') document.getElementById('ctab-appscript').className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white cursor-pointer';
+            if (panelId === 'panel-github') document.getElementById('ctab-github').className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white cursor-pointer';
+            if (panelId === 'panel-sharelink') document.getElementById('ctab-link').className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold bg-padi-600 text-white cursor-pointer';
+        }
+
+        function saveCloudConfig() {
+            appState.cloudConfig.gasUrl = document.getElementById('cloud-gas-url').value.trim();
+            appState.cloudConfig.gasAutoSync = document.getElementById('cloud-gas-autosync').checked;
+            appState.cloudConfig.ghToken = document.getElementById('cloud-gh-token').value.trim();
+            appState.cloudConfig.ghGistId = document.getElementById('cloud-gh-gistid').value.trim();
+            saveState(false);
+            showToast('Konfigurasi Cloud berhasil disimpan!', 'success');
+        }
+
+        function copyAppsScriptCode() {
+            const textarea = document.getElementById('gas-code-template');
+            textarea.select();
+            document.execCommand('copy');
+            showToast('Kode Google Apps Script berhasil disalin!', 'success');
+        }
+
+        async function syncToGoogleAppsScript(direction, silent = false) {
+            const url = appState.cloudConfig.gasUrl || document.getElementById('cloud-gas-url').value.trim();
+            if (!url) {
+                if (!silent) showToast('Masukkan URL Web App Google Apps Script terlebih dahulu.', 'error');
+                return;
+            }
+            try {
+                if (!silent) showToast('Menghubungkan ke Google Apps Script...', 'info');
+                if (direction === 'PUSH') {
+                    await fetch(url, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(appState)
+                    });
+                    if (!silent) showToast('Data berhasil dikirim ke Google Apps Script!', 'success');
+                } else {
+                    const res = await fetch(url);
+                    const remoteData = await res.json();
+                    if (remoteData && typeof remoteData.stokGabahKg === 'number') {
+                        appState = migrateState(remoteData);
+                        saveState(false);
+                        renderStoreIdentity();
+                        renderAll();
+                        showToast('Data berhasil dipulihkan dari Google Apps Script!', 'success');
+                    } else {
+                        showToast('Belum ada data tersimpan di Google Sheets.', 'info');
+                    }
+                }
+            } catch (err) {
+                if (!silent) showToast('Gagal terhubung ke Apps Script. Periksa URL & izin akses Web App.', 'error');
+            }
+        }
+
+        async function syncToGitHubGist(direction) {
+            const token = appState.cloudConfig.ghToken || document.getElementById('cloud-gh-token').value.trim();
+            let gistId = appState.cloudConfig.ghGistId || document.getElementById('cloud-gh-gistid').value.trim();
+
+            if (!token) {
+                showToast('Masukkan GitHub Personal Access Token terlebih dahulu.', 'error');
+                return;
+            }
+            try {
+                showToast('Menyinkronkan dengan GitHub Gist...', 'info');
+                if (direction === 'PUSH') {
+                    const endpoint = gistId ? `https://api.github.com/gists/${gistId}` : 'https://api.github.com/gists';
+                    const method = gistId ? 'PATCH' : 'POST';
+                    const res = await fetch(endpoint, {
+                        method,
+                        headers: {
+                            'Authorization': `token ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            description: 'Database Toko Kaleleng Indah - Jual Beli Gabah',
+                            public: false,
+                            files: {
+                                'toko_kaleleng_indah_db.json': {
+                                    content: JSON.stringify(appState, null, 2)
+                                }
+                            }
+                        })
+                    });
+                    const data = await res.json();
+                    if (data.id) {
+                        appState.cloudConfig.ghGistId = data.id;
+                        document.getElementById('cloud-gh-gistid').value = data.id;
+                        saveState(false);
+                        showToast(`Backup ke GitHub Gist berhasil! (ID: ${data.id.slice(0, 8)}...)`, 'success');
+                    } else {
+                        showToast('Gagal backup ke GitHub. Periksa Token Anda.', 'error');
+                    }
+                } else {
+                    if (!gistId) {
+                        showToast('Masukkan Gist ID untuk memulihkan data.', 'error');
+                        return;
+                    }
+                    const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+                        headers: { 'Authorization': `token ${token}` }
+                    });
+                    const data = await res.json();
+                    const fileContent = data.files && data.files['toko_kaleleng_indah_db.json']?.content;
+                    if (fileContent) {
+                        appState = migrateState(JSON.parse(fileContent));
+                        saveState(false);
+                        renderStoreIdentity();
+                        renderAll();
+                        showToast('Data berhasil dipulihkan dari GitHub Gist!', 'success');
+                    }
+                }
+            } catch (err) {
+                showToast('Terjadi kesalahan koneksi ke GitHub API.', 'error');
+            }
+        }
+
+        function generateShareableLink() {
+            // Hapus logoBase64 sementara pada link URL agar tautan tetap ringkas
+            const snapshot = JSON.parse(JSON.stringify(appState));
+            snapshot.storeProfile.logoBase64 = '';
+            const jsonStr = JSON.stringify(snapshot);
+            const encoded = btoa(unescape(encodeURIComponent(jsonStr)));
+            const baseUrl = window.location.href.split('#')[0];
+            const fullUrl = `${baseUrl}#data=${encoded}`;
+            document.getElementById('shareable-url-output').value = fullUrl;
+            showToast('Link akses online berhasil dibuat!', 'success');
+        }
+
+        function copyShareableLink() {
+            const input = document.getElementById('shareable-url-output');
+            if (!input.value) generateShareableLink();
+            input.select();
+            document.execCommand('copy');
+            showToast('Link akses online berhasil disalin ke clipboard!', 'success');
+        }
+
+        function exportDatabaseJSON() {
+            const blob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `backup_toko_kaleleng_indah_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('File backup JSON berhasil diunduh!', 'success');
+        }
+
+        function importDatabaseJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    appState = migrateState(imported);
+                    saveState(false);
+                    renderStoreIdentity();
+                    renderAll();
+                    closeCloudModal();
+                    showToast('Database JSON berhasil dipulihkan!', 'success');
+                } catch (err) {
+                    showToast('Format file JSON tidak valid.', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // =========================================================================
+        // 9. INFO APLIKASI (UKKIAKKI STUDIO), RESET & INISIALISASI
+        // =========================================================================
+        function openAppInfoModal() {
+            document.getElementById('modal-app-info').classList.remove('hidden');
+        }
+        function closeAppInfoModal() {
+            document.getElementById('modal-app-info').classList.add('hidden');
+        }
+
+        function openResetModal() {
+            closeStoreSettingsModal();
+            document.getElementById('modal-reset').classList.remove('hidden');
+        }
+        function closeResetModal() {
+            document.getElementById('modal-reset').classList.add('hidden');
+        }
+        function confirmResetData() {
+            appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+            saveState(false);
+            renderStoreIdentity();
+            updateTradeFormUI();
+            renderAll();
+            closeResetModal();
+            showToast('Data dikembalikan ke data awal Toko Kaleleng Indah!', 'success');
+        }
+
+        function setDefaultDates() {
+            const today = new Date().toISOString().split('T')[0];
+            const next2Weeks = new Date();
+            next2Weeks.setDate(next2Weeks.getDate() + 14);
+            const tempoStr = next2Weeks.toISOString().split('T')[0];
+
+            document.getElementById('jb-tanggal').value = today;
+            document.getElementById('modal-tanggal').value = today;
+            document.getElementById('giling-tanggal').value = today;
+            document.getElementById('up-tempo').value = tempoStr;
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            setDefaultDates();
+            renderStoreIdentity();
+            updateTradeFormUI();
+            renderAll();
+        });
+    </script>
+</body>
+</html>
